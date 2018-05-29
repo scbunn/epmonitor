@@ -1,0 +1,54 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+
+<!-- navigation cards -->
+<section class="row">
+    <div class="col s12 m4">
+        <div class="card deep-orange lighten-4">
+            <div class="card-content center-align">
+                <h5>Monitors</h5>
+                <p class="hide-on-med-and-down">Monitor endpoints for stuff</p>
+            </div>
+            <div class="card-image">
+                <img src="https://source.unsplash.com/256x256/?charts">
+            </div>
+            <div class="card-action center-align">
+                <a href="{{ url_for('monitors.index') }}" class="deep-orange lighten-1 btn btn-small">Monitors</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col s12 m4">
+        <div class="card deep-orange lighten-4">
+            <div class="card-content center-align">
+                <h5>Integrations</h5>
+                <p class="hide-on-med-and-down">Do something useful with the data</p>
+            </div>
+            <div class="card-image">
+                <img src="https://source.unsplash.com/256x256/?integration">
+            </div>
+            <div class="card-action center-align">
+                <a href="#" class="deep-orange lighten-1 btn btn-small">Integrations</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col s12 m4">
+        <div class="card deep-orange lighten-4">
+            <div class="card-content center-align">
+                <h5>Settings</h5>
+                <p class="hide-on-med-and-down">Configure EP Monitor</p>
+            </div>
+            <div class="card-image">
+                <img src="https://source.unsplash.com/256x256/?configure">
+            </div>
+            <div class="card-action center-align">
+                <a href="#" class="deep-orange lighten-1 btn btn-small">Settings</a>
+            </div>
+        </div>
+    </div>
+
+</section> <!-- end navigation cards -->
+
+{% endblock %}

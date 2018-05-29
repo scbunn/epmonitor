@@ -1,0 +1,37 @@
+{# set the active navigation link if undefined #}
+{% set active_page = active_page | default('index') %}
+
+        <header>
+            <div class="navbar-fixed">
+                <nav class="deep-orange"> <!-- top navigation -->
+                    <div class="container">
+                        <div class="nav-wrapper">
+                            <a href="{{ url_for('main.index') }}" class="brand-logo"><i class="fas fa-chart-line"></i> Monitoring</a>
+                            <a class="button-collapse" href="#" data-activates="mobile-nav">
+                                <i class="material-icons">menu</i>
+                            </a>
+                            <ul class="right hide-on-med-and-down">
+                                <li {% if active_page == 'index' %}class="active"{% endif %}>
+                                    <a href="{{ url_for('main.index') }}">Home</a>
+                                </li>
+                                <li {% if active_page == 'monitors' %}class="active"{% endif %}>
+                                    <a href="{{ url_for('monitors.index') }}">Monitors</a>
+                                </li>
+                                <li {% if active_page == 'integrations' %}class="active"{% endif %}>
+                                    <a href="#">Integrations</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav> <!-- end top navigation -->
+            </div>
+
+            <!-- sidebar nav -->
+            <ul class="side-nav" id="mobile-nav">
+                <li {% if active_page == 'index' %}class="active"{% endif %}>
+                    <a href="{{ url_for('main.index') }}">
+                        <i class="material-icons">show_chart</i>Monitors
+                    </a>
+                </li>
+            </ul> <!-- end sidebar nav -->
+        </header>

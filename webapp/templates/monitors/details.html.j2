@@ -1,0 +1,193 @@
+{% extends "base.html.j2" %}
+{% set active_page = 'monitors' %}
+
+{% block content %}
+    <div class="row">
+        <div class="col s12">
+            <h1>{{ monitor.name }}</h1>
+            <div class="card">
+                <div class="card-image">
+                    <canvas id="monitorRealtime" width=1024" height=300"></canvas>
+                </div>
+                <div class="card-tabs">
+                    <ul class="tabs tabs-fixed-width">
+                        <li class="tab"><a href="#realtime">Data</a></li>
+                        <li class="tab"><a href="#details">Details</a></li>
+                        {% if monitor.payload %}<li class="tab"><a href="#payload">Payload</a></li>{% endif %}
+                        {% if monitor.headers %}<li class="tab"><a href="#headers">Headers</a></li>{% endif %}
+                    </ul>
+                </div>
+                <div class="fixed-action-btn horizontal" style="position:relative; float:right; ">
+                    <a class="btn-floating btn-small deep-orange">
+                        <i class="large material-icons">settings</i>
+                    </a>
+                    <ul>
+                        <li class="waves-effect waves-light">
+                            <a href="#!"><i class="material-icons black-text">delete</i></a>
+                        </li>
+                        <li class="waves-effect waves-light">
+                            <a href="{{ url_for('monitors.edit', slug=monitor.slug)  }}"><i class="material-icons black-text">edit</i></a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-content deep-orange lighten-4">
+                    <div id="realtime">
+                        {% if results %}
+                        <p class="center text-blue-grey text-darken-4"><strong>{{ monitor.name }} statistics</strong></p>
+                        <p>
+                            <em>
+                                Statistics are calculated based on the current window of 
+                                <strong>{{ results|length * endpoint.frequency }} </strong>
+                                seconds.
+                            </em>
+                        </p>
+                        <table class="responsive-table">
+                            <thead>
+                                <tr>
+                                    <th>Availability</th>
+                                    <th>Failure rate</th>
+                                    <th>Standard Deviation</th>
+                                    <th>p99</th>
+                                    <th>p90</th>
+                                    <th>p75</th>
+                                    <th>p50</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ '%0.2f' | format(results|availability) }}% </td>
+                                    <td>{{ '%0.2f' | format(results|failRate) }}%</td>
+                                    <td>{{ '%0.2f' | format(results|stddev) }} ms </td>
+                                    <td>{{ '%0.2f' | format(results|percentile(99)) }} ms</td>
+                                    <td>{{ '%0.2f' | format(results|percentile(90)) }} ms</td>
+                                    <td>{{ '%0.2f' | format(results|percentile(75)) }} ms</td>
+                                    <td>{{ '%0.2f' | format(results|percentile(50)) }} ms</td>
+                                </tr>
+                            </tbody>
+                        </table><br>
+                        <p class="center text-blue-grey text-darken-4"><strong>Request results</strong></p>
+                        <table class="responsive-table highlight">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Response</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for window in results %}
+                                <tr>
+                                    <td>{{ moment(window.datetime).format('YYYY-MM-DD HH:mm:ss ZZ') }}</td>
+                                    <td>{{ '%0.2f' | format(window.elapsed|float) }} ms</td>
+                                    <td>{{ window.status_code }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <p class="flow-text">Waiting on data...</p>
+                        {% endif %}
+                    </div>
+                    <div id="details">
+                        <table class="responsive-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Created</th>
+                                    <th>Updated</th>
+                                    <th>Request Type</th>
+                                    <th>Frequency (seconds)</th>
+                                    <th>Endpoint</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ monitor.name }}</td>
+                                    <td>{{ moment(monitor.created).fromNow() }}</td>
+                                    <td>{{ moment(monitor.updated).fromNow() }}</td>
+                                    <td>{{ endpoint.verb }}</td>
+                                    <td>{{ endpoint.frequency }}</td>
+                                    <td>{{ endpoint.url | truncate(25) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if endpoint.payload %}
+                    <div id="payload" class="blue-grey lighten-1">
+                        <pre><code>{{ endpoint.payload|e }}</code></pre>
+                    </div>
+                    {% endif %}
+                    {% if endpoint.headers %}
+                    <div id="headers">
+                        <table class="responsive-table">
+                            <thead>
+                                <tr>
+                                    <th>Key</th>
+                                    <th>Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for header in endpoint.headers %}
+                                <tr>
+                                    {% for key, value in header.items() %}
+                                    <td>{{ key }}</td>
+                                    <td>{{ value }} </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascript %}
+{{ super() }}
+{{ moment.include_moment() }}
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js"></script>
+<script type="text/javascript">
+    var ctx = $("#monitorRealtime");
+    var responseTimeChart = new Chart(ctx, {
+        type: 'bubble',
+        labelString: '{{ monitor.name }}',
+        data: {
+            datasets: [{
+                label: 'Response Time (ms)',
+                data: [
+                    {% for window in results %}
+                    { y: {{ window.elapsed }}, x: new Date({{ window.timestamp }} * 1000), r: 10 },
+                    {% endfor %}
+                ]
+            }]
+        },
+        options: {
+            title: {
+                display: true,
+                text: '{{ monitor.name }}'
+            },
+            scales: {
+                yAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'milliseconds'
+                    }
+                }],
+                xAxes: [{
+                    type: 'time',
+                    time: {
+                        unit: 'second'
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Timeline'
+                    }
+                }]
+            }
+        }
+    });
+</script>
+{% endblock %}

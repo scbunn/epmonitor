@@ -1,0 +1,144 @@
+{% extends "base.html.j2" %}
+{% set active_page = 'monitors' %}
+
+{% block content %}
+<h1>{% if monitor.name %}{{ monitor.name }}{% else %}New {% endif %} Endpoint</h1>
+
+<div class="row">
+   <form class="col s12" action="" method="post">
+        {{ form.hidden_tag() }}
+        <div class="row">
+            <p class="flow-text center">Core configuration</p>
+        </div>
+        <div class="row">
+            <div class="input-field col s6">
+                {{ form.name.label }}
+                {{ form.name(class_="validate", required=True, minlength=3, maxlength=128) }}
+            </div>
+            <div class="input-field col s6">
+                {{ form.verb(class_="validate", required=True) }}
+                {{ form.verb.label }}
+            </div>
+        </div>
+        <div class="row">
+             <div class="range-field col s12">
+                {{ form.frequency.label }}
+                {{ form.frequency(type="range", default="{{ form.frequency.data }}", class_="validate", required=True, min="1", max="300") }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s3">
+                {{ form.scheme(class_="validate", required=True) }}
+                {{ form.scheme.label }}
+            </div>
+            <div class="input-field col s6">
+                {{ form.server.label }}
+                {{ form.server(class_="validate", required=True, minlength=3, maxlength=256)  }}
+            </div>
+            <div class="input-field col s3">
+                {{ form.port.label }}
+                {{ form.port(class_="validate", type="number", min=1, max="65536", required=True) }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+                {{ form.path.label }}
+                {{ form.path(class_="validate") }}
+            </div>
+        </div>
+        <div class="row" id="http_headers">
+            <p class="flow-text center">HTTP Headers</p>
+            {% for header in form.headers %}
+            <div class="row">
+                <div class="input-field col s6">
+                    {{ header.key(class_="validate", required=True) }}
+                </div>
+                <div class="input-field col s6">
+                    {{ header.value(class_="validate", required=True) }}
+                </div>
+            </div>
+        {% endfor %}
+        <a href="#!" id="addHeaderBtn" onclick="addHeader();" class="btn btn-small blue-grey accent-2 waves-effect center">Add</a>
+        </div>
+        <div class="row">
+            <p class="flow-text center">Request Payload</p>
+        </div>
+        <div class="row">
+            <div class="input-field col s12">
+                {{ form.payload.label }}
+                {{ form.payload(rows=4, cols=120, class_="validate materialize-textarea") }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-field">
+                {% if monitor.name %}{# Updating an existing monitor #}
+                {{ form.submit(class_="btn btn-small deep-orange accent-2 waves-effect", value="Update") }}
+                {% else %}{# this is a new monitor #}
+                {{ form.submit(class_="btn btn-small deep-orange accent-2 waves-effect", value="Add") }}
+                {% endif %}
+                <a href="{{ request.referrer }}" class="btn btn-small deep-orance acceent-1 waves-effect">Cancel</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+{% endblock %}
+
+
+{% block javascript %}
+{{ super() }}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('select').material_select();
+        });
+    </script>
+
+    {# TODO: Move this to its own file #}
+    <script type="text/javascript">
+
+        // This is probably unoptimized and naive, but its working
+        // TODO: Make this javascript not suck
+        // TODO: Add functionality to remove a header; this will require
+        //       some sort of way of re-numbering all existing headers
+        function newHeaderHTML() {
+            // return a string for a new div for a new set of headers
+            var nextID = getNextHeaderID();
+            var headerHTML = [
+                '<div class="row">',
+                '<div class="input-field col s6">',
+                `<input class="validate" id="headers-${nextID}-key" name="headers-${nextID}-key" required type="text">`,
+                '</div>',
+                '<div class="input-field col s6">',
+                `<input class="validate" id="headers-${nextID}-value" name="headers-${nextID}-value" required type="text">`,
+                '</div>',
+                '</div>'
+            ].join('\n');
+            return headerHTML;
+        }
+
+        function getNextHeaderID() {
+            // return the next ID for a header.
+            // We count how many headers currently exist and return the
+            // next number.
+
+            // we divide by two because there are two input fields for each
+            // header
+            var count = $('#http_headers').find(':input').length / 2 
+
+            // return 0 if there are no headers; otherwise return the number
+            // of headers plus 1
+            if ( count == 0 ) {
+                return 0;
+            } else {
+                return count++;
+            }
+        }
+
+        // Add a new set of input forms for a new header
+        function addHeader() {
+            console.log(`adding a new header with id ${getNextHeaderID()}`);
+            $("#addHeaderBtn").before(newHeaderHTML());
+        }
+    </script>
+{% endblock %}

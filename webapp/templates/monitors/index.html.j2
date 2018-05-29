@@ -1,0 +1,70 @@
+{% extends "base.html.j2" %}
+{% set active_page = 'monitors' %}
+
+{% block content %}
+<h1>Endpoint Monitors</h1>
+<div class="row">
+    <a href="{{ url_for('monitors.add') }}" class="btn-floating right waves-effect deep-orange accent-2"><i class="material-icons">add</i></a>
+    <table class="responsive-table highlight">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Frequency <i class="fas fa-question-circle"></i></th>
+                <th>Response <i class="fas fa-question-circle"></i></th>
+                <th>Status Code <i class="fas fa-question-circle"></i></th>
+                <th>99th <i class="fas fa-question-circle"></i></th>
+                <th>Payload <i class="fas fa-question-circle"></i></th>
+                <th>Headers <i class="fas fa-question-circle"></i></th>
+                <th>Settings</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for monitor in monitors %}
+            <tr>
+                <td><a href="{{ url_for('monitors.details', slug=monitor.slug) }}">{{ monitor.name }}</a></td>
+                <td>{{ monitor.frequency }}</td>
+                <td>{% if monitor.slug in results %}{{ '%0.2f' | format(results[monitor.slug][-1].elapsed|float) }} ms{% else %}-{% endif %}</td>
+                <td>{% if monitor.slug in results %}{{ results[monitor.slug][-1].status_code }}{% else %}-{% endif %}</td>
+                <td>{% if monitor.slug in results %}{{ '%0.2f' | format(results[monitor.slug] | percentile(95)) }}{% else %}-{% endif %}</td>
+                <td>
+                    <i class="{% if monitor.payload %}fas fa-check-circle{% else %}fas fa-times-circle{% endif %}"></i>
+                </td>
+                <td>
+                    <i class="{% if monitor.headers %}fas fa-check-circle{% else %}fas fa-times-circle{% endif %}"></i>
+                </td>
+                <td>
+                    <a class="dropdown-button btn btn-floating deep-orange accent-2 waves-effect" data-beloworigin="true" href="#" data-activates="settings-{{ monitor.slug }}"><i class="material-icons">settings</i></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Drop down settings menus -->
+{% for monitor in monitors %}
+<ul id="settings-{{ monitor.slug }}" class="dropdown-content">
+    <li><a href="{{ url_for('monitors.edit', slug=monitor.slug) }}"><i class="fas fa-edit"></i> Edit</a></li>
+    <li><a href="#!"><i class="fas fa-stop-circle"></i> Stop</a></li>
+    <li><a href="#!"><i class="fas fa-trash"></i> Delete</a></li>
+</ul>
+{% endfor %}
+<!-- end drop downs -->
+
+{% endblock %}
+
+{% block javascript %}
+{{ super() }}
+
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('.dropdown-button').dropdown({
+            inDuration: 300,
+            outDuration: 225,
+            constrainWidth: true,
+            hover: true,
+            belowOrigin: true
+        });
+    });
+</script>
+{% endblock %}
