@@ -61,6 +61,10 @@ class Endpoint(object):
         self._headers = []
         self._payload = None
 
+        # TODO: turn these into properties
+        self.timeout = 5
+        self.verify = False
+
     @property
     def payload(self):
         """Return the payload of the endpoint."""
@@ -245,3 +249,17 @@ class Endpoint(object):
     def url(self, value):
         """This property should be read-only."""
         raise ValueError("The url property is read only.")
+
+    @property
+    def request(self):
+        """Prepare this endpoint for a `requests.request` call.
+
+        This property returns a tuple with the url and kwarg payload.
+
+        """
+        return (self.url, {
+            'headers': {k: v for d in self.headers for k, v in d.items()},
+            'timeout': self.timeout,
+            'verify': self.verify,
+            'data': self.payload
+        })

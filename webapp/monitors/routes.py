@@ -145,6 +145,10 @@ def process_form_data(form, monitor):
     monitor.verb = form.verb.data
     monitor.payload = form.payload.data
     monitor.headers = parse_headers(form.headers.data)
+
+    # TODO: Fix this and make properties/UI
+    monitor.enabled = True
+
     db.session.add(monitor)
     db.session.commit()
     return monitor

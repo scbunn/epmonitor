@@ -19,6 +19,7 @@ def signal_handler(signal, frame):
 
 
 def teardown():
+    requestManager.clear()
     requestManager.stop()
 
 

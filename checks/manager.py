@@ -166,11 +166,14 @@ class EndpointRequestThread(threading.Thread):
         Make the request to the passed `endpoint` and record the results.
 
         """
+        # TODO: This is starting to get messy, clean this up
         dimensions = {}
         dimensions['datetime'] = datetime.datetime.now(datetime.timezone.utc)
         dimensions['timestamp'] = dimensions['datetime'].timestamp()
         try:
-            response = requests.get(endpoint.url)
+            url, payload = endpoint.request
+            response = requests.request(endpoint.verb, url, **payload)
+            dimensions['content'] = response.content
             dimensions['status_code'] = response.status_code
             dimensions['TTFB'] = sum((r.elapsed for r in response.history),
                                      response.elapsed).total_seconds() * 1000.0
@@ -184,6 +187,15 @@ class EndpointRequestThread(threading.Thread):
             endpoint=endpoint,
             dimensions=dimensions
         )
+
+    def wait_for_frequency(self, frequency):
+        """wait for this run's frequency to expire"""
+        while frequency > 0:
+            # check if the thread wants to die
+            if self.should_die:
+                return
+            time.sleep(1)
+            frequency -= 1
 
     def run(self):
         """Thread execution point.
@@ -200,9 +212,8 @@ class EndpointRequestThread(threading.Thread):
                 # throw Empty exception after timeout to prevent deadlock
                 # TODO: make sure this is actually an `Endpoint`
                 endpoint = self.request_queue.get(timeout=10)
-                print(f"{self.name} is checking {endpoint.url}")
                 self.request(endpoint)
-                time.sleep(endpoint.frequency)
+                self.wait_for_frequency(endpoint.frequency)
                 self.request_queue.task_done()
                 self.request_queue.put(endpoint)
             except queue.Empty:

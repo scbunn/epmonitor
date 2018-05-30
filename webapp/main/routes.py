@@ -3,7 +3,7 @@
 This module contains the main routes of the web application.
 
 """
-from flask import render_template, flash, redirect, url_for
+from flask import render_template, flash, redirect, url_for, request
 from webapp.main import bp
 from webapp.models import Monitor
 from webapp import requestManager
@@ -31,9 +31,6 @@ def load():
     #       that is called with an application_context on start.  Also, this
     #       will need to be called from the UI
 
-    # first we need to kill any running threads
-    requestManager.stop()
-
     # Now we need to clear the queue
     requestManager.clear()
 
@@ -52,7 +49,6 @@ def load():
             ep.payload = monitor.payload
             ep.header(**monitor.headers)
             requestManager.request_queue.put(ep)
-    requestManager.start()
     flash(f"Loaded {count} monitors")
     return redirect(url_for('monitors.index'))
 
@@ -66,3 +62,9 @@ def index():
 
     """
     return render_template('index.html.j2')
+
+
+@bp.route('/test')
+def header_test():
+    """Test function to print received headers and payload"""
+    return f"headers: {request.headers}\n\n{request}"

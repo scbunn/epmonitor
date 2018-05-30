@@ -9,7 +9,6 @@ from checks.endpoint import HTTPVerb
 from sqlalchemy import CheckConstraint
 from sqlalchemy_json import MutableJson
 from webapp import db
-from wtforms import BooleanField
 
 
 class Monitor(db.Model):
