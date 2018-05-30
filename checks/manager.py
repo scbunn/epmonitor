@@ -21,6 +21,7 @@ class RequestsManager(object):
             thread_count(int): Number of threads to spawn for requests.
 
         """
+        print("New RequestManager")
         self.thread_count = thread_count
         self.request_queue = queue.Queue()
         self.threads = []

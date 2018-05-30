@@ -7,15 +7,21 @@ flaks application.  This should be passed to FLASK_APP::
     flask run
 
 """
-import atexit
+import signal
+import sys
 from webapp import create_app, requestManager
 
 
+def signal_handler(signal, frame):
+    print("Cleaning up application stack...")
+    teardown()
+    sys.exit(0)
+
+
 def teardown():
-    print("tearing down...")
     requestManager.stop()
 
 
-atexit.register(teardown)
+signal.signal(signal.SIGINT, signal_handler)
 
 app = create_app()
