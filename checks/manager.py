@@ -22,7 +22,7 @@ class RequestsManager(object):
             thread_count(int): Number of threads to spawn for requests.
 
         """
-        self.logger = logger or logging.getLogger("RequestManager")
+        self.logger = logger or logging.getLogger(__name__)
         self.thread_count = thread_count
         self.request_queue = queue.Queue()
         self.threads = []

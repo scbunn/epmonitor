@@ -4,7 +4,6 @@ This is the frontend web application that sits in front of the endpoint
 monitor.
 
 """
-import logging
 from flask import Flask
 from config import Config
 from flask_sqlalchemy import SQLAlchemy
@@ -26,6 +25,9 @@ def configure_extensions(app, config):
     migrate.init_app(app, db)
     moment.init_app(app)
     requestManager.thread_count = config.REQUEST_THREADS
+    # TODO: FixMe, I shouldn't have to pass app.logger here.  Python logging
+    # is a PITA
+    requestManager.logger = app.logger
     app.logger.debug("Flask extensions registered.")
 
 
@@ -56,31 +58,6 @@ def configure_jinja_extensions(app):
     app.logger.debug("Custom Jinja extensions registered.")
 
 
-def configure_logging(config):
-    """Configure application logging for `app`"""
-    from logging.config import dictConfig
-    default_format = '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
-    dictConfig({
-        'version': 1,
-        'formatters': {
-            'default': {
-                'format': default_format,
-            }
-        },
-        'handlers': {
-            'wsgi': {
-                'class': 'logging.StreamHandler',
-                'stream': 'ext://flask.logging.wsgi_errors_stream',
-                'formatter': 'default',
-            }
-        },
-        'root': {
-            'level': config.LOG_LEVEL,
-            'handlers': ['wsgi']
-        },
-    })
-
-
 def create_app(config_class=Config):
     """Flask application factory.
 
@@ -88,7 +65,6 @@ def create_app(config_class=Config):
     application with the desired configuration state.
 
     """
-    configure_logging(config_class)
     app = Flask(__name__)
     app.config.from_object(config_class)
     configure_extensions(app, config_class)
