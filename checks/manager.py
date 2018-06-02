@@ -6,6 +6,7 @@ responsible for issuing check requests.
 """
 import collections
 import datetime
+import logging
 import requests
 import threading
 import time
@@ -14,19 +15,20 @@ import queue
 
 class RequestsManager(object):
 
-    def __init__(self, thread_count):
+    def __init__(self, thread_count=1, logger=None):
         """Initialize a new Request Manager.
 
         Args:
             thread_count(int): Number of threads to spawn for requests.
 
         """
-        print("New RequestManager")
+        self.logger = logger or logging.getLogger("RequestManager")
         self.thread_count = thread_count
         self.request_queue = queue.Queue()
         self.threads = []
         self.results = {}
         self.lock = threading.Lock()
+        self.logger.debug("Created a new RequestManager")
 
     @property
     def window(self):
@@ -49,6 +51,8 @@ class RequestsManager(object):
         Start a new thread pool of `thread_count`.
 
         """
+        self.logger.info(
+            f"Starting a new thread pool with {self.thread_count} threads")
         if len(self.threads) > 0:
             print(f"thread pool already been started? {len(self.threads)}")
             return

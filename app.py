@@ -7,9 +7,14 @@ flaks application.  This should be passed to FLASK_APP::
     flask run
 
 """
+import atexit
+import config
 import signal
 import sys
 from webapp import create_app, requestManager
+
+
+config_class = config.configuration()
 
 
 def signal_handler(signal, frame):
@@ -24,5 +29,6 @@ def teardown():
 
 
 signal.signal(signal.SIGINT, signal_handler)
+atexit.register(teardown)
 
-app = create_app()
+app = create_app(config_class)

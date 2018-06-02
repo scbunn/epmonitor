@@ -10,6 +10,12 @@ from webapp import requestManager
 from checks.endpoint import Endpoint
 
 
+@bp.route('/start')
+def start():
+    requestManager.start()
+    return "started"
+
+
 @bp.route('/stop')
 def stop():
     """Stop threads"""

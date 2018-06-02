@@ -20,4 +20,22 @@ class Config(object):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URI') or \
         'postgresql+psycopg2://postgres:development@localhost/postgres'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    LOG_LEVEL = "debug"
+
+
+class DebugConfig(Config):
+    DEBUG = True
+    REQUEST_THREADS = 2
+    LOG_LEVEL = "DEBUG"
+
+
+def configuration():
+    """Return the correct configuration object.
+
+    Based on the current environment settings, return the correct configuration
+    object.
+
+    """
+    configs = {
+        'DEBUG': DebugConfig,
+    }
+    return configs.get(os.environ.get('FLASK_ENV'), DebugConfig)

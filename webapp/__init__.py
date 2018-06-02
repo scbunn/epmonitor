@@ -4,6 +4,7 @@ This is the frontend web application that sits in front of the endpoint
 monitor.
 
 """
+import logging
 from flask import Flask
 from config import Config
 from flask_sqlalchemy import SQLAlchemy
@@ -16,7 +17,68 @@ from webapp.utils.jinja import percentile, failRate, availability, stddev
 db = SQLAlchemy()
 migrate = Migrate()
 moment = Moment()
-requestManager = RequestsManager(10)
+requestManager = RequestsManager()
+
+
+def configure_extensions(app, config):
+    """Configure Flask Extensions."""
+    db.init_app(app)
+    migrate.init_app(app, db)
+    moment.init_app(app)
+    requestManager.thread_count = config.REQUEST_THREADS
+    app.logger.debug("Flask extensions registered.")
+
+
+def register_blueprints(app):
+    """Register Blueprint packages with the application."""
+
+    # Register the main blueprint.  This is the home/landing page
+    from webapp.main import bp as main_blueprint
+    app.register_blueprint(main_blueprint)
+    app.logger.debug("Registered main blueprint.")
+
+    # Register the monitors blueprint.
+    from webapp.monitors import bp as monitors_blueprint
+    app.register_blueprint(monitors_blueprint, url_prefix='/monitors')
+    app.logger.debug("Registered monitors blueprint.")
+
+
+def configure_jinja_extensions(app):
+    """Register Jinja extensions.
+
+    Register custom Jinja filters and/or extensions.
+
+    """
+    app.jinja_env.filters['percentile'] = percentile
+    app.jinja_env.filters['failRate'] = failRate
+    app.jinja_env.filters['availability'] = availability
+    app.jinja_env.filters['stddev'] = stddev
+    app.logger.debug("Custom Jinja extensions registered.")
+
+
+def configure_logging(config):
+    """Configure application logging for `app`"""
+    from logging.config import dictConfig
+    default_format = '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+    dictConfig({
+        'version': 1,
+        'formatters': {
+            'default': {
+                'format': default_format,
+            }
+        },
+        'handlers': {
+            'wsgi': {
+                'class': 'logging.StreamHandler',
+                'stream': 'ext://flask.logging.wsgi_errors_stream',
+                'formatter': 'default',
+            }
+        },
+        'root': {
+            'level': config.LOG_LEVEL,
+            'handlers': ['wsgi']
+        },
+    })
 
 
 def create_app(config_class=Config):
@@ -26,29 +88,14 @@ def create_app(config_class=Config):
     application with the desired configuration state.
 
     """
+    configure_logging(config_class)
     app = Flask(__name__)
     app.config.from_object(config_class)
+    configure_extensions(app, config_class)
+    register_blueprints(app)
+    configure_jinja_extensions(app)
 
-    db.init_app(app)
-    migrate.init_app(app, db)
-    moment.init_app(app)
-
-    # Register the main blueprint.  This is the home/landing page
-    from webapp.main import bp as main_blueprint
-    app.register_blueprint(main_blueprint)
-
-    # Register the monitors blueprint.
-    from webapp.monitors import bp as monitors_blueprint
-    app.register_blueprint(monitors_blueprint, url_prefix='/monitors')
-
-    # Register some custom jinja filters
-    app.jinja_env.filters['percentile'] = percentile
-    app.jinja_env.filters['failRate'] = failRate
-    app.jinja_env.filters['availability'] = availability
-    app.jinja_env.filters['stddev'] = stddev
-
-    requestManager.start()
-
+    app.logger.debug(f"Flask application created [{config_class.__name__}]")
     return app
 
 from webapp import models
