@@ -185,7 +185,7 @@ class EndpointRequestThread(threading.Thread):
 
         """
         # TODO: This is starting to get messy, clean this up
-        self.status = f"Make a request to endpoint [{endpoint.name}]"
+        self.status = f"Sending a request to an endpoint, {endpoint.name}"
         dimensions = {}
         dimensions['datetime'] = datetime.datetime.now(datetime.timezone.utc)
         dimensions['timestamp'] = dimensions['datetime'].timestamp()
@@ -212,7 +212,7 @@ class EndpointRequestThread(threading.Thread):
     def wait_for_frequency(self, frequency, name):
         """wait for this run's frequency to expire"""
         self.status = \
-            f"waiting for frequency to expire [{name}] ({frequency})"
+            f"waiting for endpoint frequency to expire, {name}, {frequency}"
         while frequency > 0:
             # check if the thread wants to die
             if self.should_die:

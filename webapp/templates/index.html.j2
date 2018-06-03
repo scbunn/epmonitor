@@ -205,14 +205,18 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Status</th>
+                                <th>Endpoint</th>
+                                <th>Frequency</th>
                                 <th>Alive</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for t in stack['rm_threads'] %}
                             <tr>
-                                <td>{{ t[0] }}</td>
-                                <td>{{ t[1] }}</td>
+                                <td>{{ t.name }}</td>
+                                <td>{{ t.status }}</td>
+                                <td>{{ t.endpoint }}</td>
+                                <td>{{ t.frequency }}</td>
                                 <td>
                                     <i class="{% if t[2] %}fas fa-check-circle{% else %}fas fa-times-circle{% endif %}"></i>
                                 </td>

@@ -188,16 +188,40 @@ class RuntimeStats(object):
             return {'requestManager': {}}
 
         threads = self.rm.threads
-        # TODO: Fix Me
-        #       only return monitors with enabled = True for monitor count
+        Thread = collections.namedtuple('Thread', [
+            'name',
+            'status',
+            'endpoint',
+            'frequency',
+            'alive'
+        ])
+
+        # iterate over threads and build Thread tuples;
+        # doing this in a list comp is difficult to read
+        active_threads = []
+        for t in threads:
+            message = t.status.split(',')
+            endpoint = ''
+            frequency = ''
+            if len(message) > 0:
+                endpoint = message[1]
+                frequency = message[2]
+            _t = Thread(
+                t.name,
+                message[0],
+                endpoint,
+                frequency,
+                t.is_alive()
+            )
+            active_threads.append(_t)
+
         return {
             'requestManager': {
                 'thread_count': self.rm.thread_count,
                 'queue_size': self.rm.request_queue.qsize(),
                 'threads': {
                     'running': len(threads),
-                    'active': [
-                        (t.name, t.status, t.is_alive()) for t in threads]
+                    'active': active_threads
                 }
             }
         }
