@@ -13,6 +13,14 @@ from webapp import requestManager
 from webapp.models import Monitor
 
 
+@bp.route('/new')
+def new_layout_temp():
+    system = system_stats()
+    rm = requestManager_stats()
+    return render_template('settings/new.html.j2', title='new layout',
+                           stats={**system, **rm})
+
+
 @bp.route('/')
 def display_runtime_settings():
     """Display current runtime settings.
@@ -39,8 +47,7 @@ def system_stats():
     return {
         'system': {
             'cpu_percent': psutil.cpu_percent(interval=None),
-            'cpu_times': psutil.cpu_times(percpu=False),
-            'cpu_stats': psutil.cpu_stats(),
+            'cpu_times': psutil.cpu_times_percent(interval=None),
             'memory': psutil.virtual_memory(),
             'netio': psutil.net_io_counters(),
         },

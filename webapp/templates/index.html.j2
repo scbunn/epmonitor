@@ -1,54 +1,339 @@
-{% extends "base.html.j2" %}
+{% set mem_used_pct = (stats['proc']['memory'].uss / stats['system']['memory'].total) * 100 %}
+{% set free_memory_pct = (stats['system']['memory'].available / stats['system']['memory'].total) * 100 %}
+{% set system = stats['system'] %}
+{% set proc = stats['proc'] %}
+{% set rm = stats['requestManager'] %}
 
 {% block content %}
+<section class="section section-stats center">
+    <div class="row">
+        <div class="col s12 m6 l3">
+            <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
+                <i class="fas fa-microchip fa-lg"></i>
+                <h5>CPU Utilization %</h5>
+                <h3 class="count">{{ system['cpu_percent'] }}</h3>
+                <div class="progress grey lighten-1">
+                    <div class="determinate white" style="width: {{ system['cpu_percent'] }}%;">
+                    </div>
+                </div>
+            </div>
+        </div><!-- end of stat panel: CPU Util -->
+        <div class="col s12 m6 l3">
+            <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
+                <i class="fas fa-memory fa-lg"></i>
+                <h5>Free Memory (MB)</h5>
+                <h3 class="count">{{ '%0.2f' | format(system['memory'].available|megabytes) }}</h3>
+                <div class="progress grey lighten-1">
+                    <div class="determinate white" style="width: {{ free_memory_pct }}%;">
+                    </div>
+                </div>
+            </div>
+        </div><!-- end of stat panel: Memory -->
+        <div class="col s12 m6 l3">
+            <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
+                <i class="fas fa-stream fa-lg"></i>
+                <h5>Thread Count</h5>
+                <h3 class="count">{{ proc['thread_count'] }}</h3>
+                <div class="progress grey lighten-1">
+                    <div class="determinate white" style="width: 0%;">
+                    </div>
+                </div>
+            </div>
+        </div><!-- end of stat panel: Thread Count -->
+        <div class="col s12 m6 l3">
+            <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
+                <i class="fas fa-chart-line fa-lg"></i>
+                <h5>Monitored Endpoints</h5>
+                <h3 class="count">{{ rm['endpoint_count'] }}</h3>
+                <div class="progress grey lighten-1">
+                    <div class="determinate white" style="width: 0%;">
+                    </div>
+                </div>
+            </div>
+        </div><!-- end of stat panel: Monitor Count -->
+    </div>
+</section><!-- overview stats section -->
 
-<!-- navigation cards -->
-<section class="row">
-    <div class="col s12 m4">
-        <div class="card deep-orange lighten-4">
-            <div class="card-content center-align">
-                <h5>Monitors</h5>
-                <p class="hide-on-med-and-down">Monitor endpoints for stuff</p>
+
+<section class="section section-epmonitor center">
+    <div class="row">
+        <div class="col s12 m4 l2">
+            <div class="card-panel deep-orange-text text-darken-4 center">
+                <h5>PID</h5>
+                <h3 class="count grey-text text-darken-4">{{ proc['pid'] }}</h3>
             </div>
-            <div class="card-image">
-                <img src="https://source.unsplash.com/256x256/?charts">
+        </div><!-- end of stat panel: PID -->
+        <div class="col s12 m4 l2">
+            <div class="card-panel deep-orange-text text-darken-4 center">
+                <h5>Max Threads</h5>
+                <h3 class="count grey-text text-darken-4">{{ rm['thread_count'] }}</h3>
             </div>
-            <div class="card-action center-align">
-                <a href="{{ url_for('monitors.index') }}" class="deep-orange lighten-1 btn btn-small">Monitors</a>
+        </div><!-- end of stat panel: Max Thread Count -->
+        <div class="col s12 m4 l2">
+            <div class="card-panel deep-orange-text text-darken-4 center">
+                <h5>Running Threads</h5>
+                <h3 class="count grey-text text-darken-4">{{ rm['threads']['running'] }}</h3>
+            </div>
+        </div><!-- end of stat panel: Running Threads -->
+        <div class="col s12 m4 l2">
+            <div class="card-panel deep-orange-text text-darken-4 center">
+                <h5>Queue</h5>
+                <h3 class="count grey-text text-darken-4">{{ rm['queue_size'] }}</h3>
+            </div>
+        </div><!-- end of stat panel: Queue Size -->
+        <div class="col s12 m4 l2">
+            <div class="card-panel deep-orange-text text-darken-4 center">
+                <h5>Connections</h5>
+                <h3 class="count grey-text text-darken-4">{{ proc['connections']|length }}</h3>
+            </div>
+        </div><!-- end of stat panel: Connection Count -->
+        <div class="col s12 m4 l2">
+            <div class="card-panel deep-orange-text text-darken-4 center">
+                <h5>Memory (MB)</h5>
+                <h3 class="count grey-text text-darken-4">{{ '%0.2f' |format(proc['memory'].uss|megabytes) }}</h3>
+            </div>
+        </div><!-- end of stat panel: App Memory -->
+
+    </div>
+</section>
+
+<section class="section section-system">
+    <div class="row">
+        <div class="col s12 m6 l6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title deep-orange-text text-darken-4">CPU</span>
+                    <canvas id="chart-cpu-utilization" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col s12 m6 l6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title deep-orange-text text-darken-4">Memory</span>
+                    <canvas id="chart-system-memory" height="100"></canvas>
+                </div>
             </div>
         </div>
     </div>
+</section><!-- system stats section -->
 
-    <div class="col s12 m4">
-        <div class="card deep-orange lighten-4">
-            <div class="card-content center-align">
-                <h5>Integrations</h5>
-                <p class="hide-on-med-and-down">Do something useful with the data</p>
-            </div>
-            <div class="card-image">
-                <img src="https://source.unsplash.com/256x256/?integration">
-            </div>
-            <div class="card-action center-align">
-                <a href="#" class="deep-orange lighten-1 btn btn-small">Integrations</a>
+<section class="section section-system">
+    <div class="row">
+        <div class="col s12">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title deep-orange-text text-darken-4">Network IO</span>
+                    <canvas id="chart-network-utilization" height="100"></canvas>
+                </div>
             </div>
         </div>
     </div>
+</section><!-- network stats section -->
 
-    <div class="col s12 m4">
-        <div class="card deep-orange lighten-4">
-            <div class="card-content center-align">
-                <h5>Settings</h5>
-                <p class="hide-on-med-and-down">Configure EP Monitor</p>
+
+<section class="section section-stat-lists">
+    <div class="row">
+        <div class="col s12 l6 m6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title deep-orange-text text-darken-4">Network Connections</span>
+                    <table class="striped grey-text text-darken-4">
+                        <thead>
+                            <tr>
+                                <th>Local Address</th>
+                                <th>Remote Address</th>
+                                <th>State</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for conn in proc['connections'] %}
+                            <tr>
+                                <td>{{ conn.laddr.ip }}:{{ conn.laddr.port }}</td>
+                                {% if conn.raddr %}
+                                <td>{{ conn.raddr.ip }}:{{ conn.raddr.port }}</td>
+                                {% else %}
+                                <td></td>
+                                {% endif %}
+                                <td>{{ conn.status }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="card-image">
-                <img src="https://source.unsplash.com/256x256/?configure">
+        </div>
+        <div class="col s12 m6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title deep-orange-text text-darken-4">Application Threads</span>
+                    <table class="striped grey-text text-darken-4">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>CPU (User)</th>
+                                <th>CPU (System)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in proc['threads'] %}
+                            <tr>
+                                <td>{{ t.id }}</td>
+                                <td>{{ t.user_time }}</td>
+                                <td>{{ t.system_time }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="card-action center-align">
-                <a href="#" class="deep-orange lighten-1 btn btn-small">Settings</a>
+        </div>
+        <div class="col s12 m6 right">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title deep-orange-text text-darken-4">RequestManager Threads</span>
+                    <table class="striped grey-text text-darken-4">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Alive</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in rm['threads'].active %}
+                            <tr>
+                                <td>{{ t[0] }}</td>
+                                <td>{{ t[1] }}</td>
+                                <td>
+                                    <i class="{% if t[2] %}fas fa-check-circle{% else %}fas fa-times-circle{% endif %}"></i>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+</section>
+{% endblock %}
 
-</section> <!-- end navigation cards -->
 
+{% block javascript %}
+{{ super() }}
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js"></script>
+
+<script type="text/javascript">
+    $(document).ready(function() {
+
+        // Stat Counter Animation
+        $('.count').each(function() {
+            $(this).prop('Counter', 0).animate({
+                Counter: $(this).text()
+            }, {
+                duration: 1000,
+                easing: 'swing',
+                step: function(now) {
+                    $(this).text(Math.ceil(now));
+                }
+            });
+        });
+
+    });
+
+function countStats() {
+    $('.count').each(function() {
+        $(this).prop('Counter', 0).animate({
+            Counter: $(this).text()
+        }, {
+            duration: 1000,
+            easing: 'swing',
+            step: function(now) {
+                $(this).text(Math.ceil(now));
+            }
+        });
+    });
+}
+
+</script>
+
+<script type="text/javascript">
+    var ctx_mem_chart = document.getElementById("chart-system-memory").getContext('2d');
+var memoryChart = new Chart(ctx_mem_chart, {
+    type: 'line',
+    data: {
+        datasets: [
+            {
+                label: 'Total',
+                data: [
+                    {{ system['memory'].total|megabytes }},
+                    {{ system['memory'].total|megabytes }},
+                    {{ system['memory'].total|megabytes }},
+                    {{ system['memory'].total|megabytes }},
+                    {{ system['memory'].total|megabytes }},
+                    {{ system['memory'].total|megabytes }}
+                ]
+            },
+            {
+                label: 'Available',
+                data: [
+                    {{ system['memory'].available|megabytes }},
+                    {{ system['memory'].available|megabytes }},
+                    {{ system['memory'].available|megabytes }},
+                    {{ system['memory'].available|megabytes }},
+                    {{ system['memory'].available|megabytes }},
+                    {{ system['memory'].available|megabytes }}
+                ]
+            }
+        ]
+    },
+    options: {
+    }
+});
+
+var ctx_cpu_chart = document.getElementById("chart-cpu-utilization").getContext('2d');
+var cpuChart = new Chart(ctx_cpu_chart, {
+    type: 'line',
+    data: {
+        datasets: [
+            {
+                label: 'User',
+                data: [
+                    {{ system['cpu_times'].user }},
+                    {{ system['cpu_times'].user }},
+                    {{ system['cpu_times'].user }},
+                    {{ system['cpu_times'].user }},
+                    {{ system['cpu_times'].user }},
+                    {{ system['cpu_times'].user }},
+                ]
+            },
+            {
+                label: 'System',
+                data: [
+                    {{ system['cpu_times'].system }},
+                    {{ system['cpu_times'].system }},
+                    {{ system['cpu_times'].system }},
+                    {{ system['cpu_times'].system }},
+                    {{ system['cpu_times'].system }},
+                    {{ system['cpu_times'].system }},
+                ]
+            },
+            {
+                label: 'Idle',
+                data: [
+                    {{ system['cpu_times'].idle }},
+                    {{ system['cpu_times'].idle }},
+                    {{ system['cpu_times'].idle }},
+                    {{ system['cpu_times'].idle }},
+                    {{ system['cpu_times'].idle }},
+                    {{ system['cpu_times'].idle }},
+                ]
+            }
+        ]
+    },
+    options: {
+    }
+});
+</script>
 {% endblock %}

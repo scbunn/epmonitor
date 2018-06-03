@@ -67,10 +67,4 @@ def index():
     the applicaiton.
 
     """
-    return render_template('index.html.j2')
-
-
-@bp.route('/test')
-def header_test():
-    """Test function to print received headers and payload"""
-    return f"headers: {request.headers}\n\n{request}"
+    return render_template('index.html.j2', stats={})

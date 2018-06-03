@@ -1,37 +1,62 @@
 {# set the active navigation link if undefined #}
 {% set active_page = active_page | default('index') %}
 
-        <header>
-            <div class="navbar-fixed">
-                <nav class="deep-orange"> <!-- top navigation -->
-                    <div class="container">
-                        <div class="nav-wrapper">
-                            <a href="{{ url_for('main.index') }}" class="brand-logo"><i class="fas fa-chart-line"></i> Monitoring</a>
-                            <a class="button-collapse" href="#" data-activates="mobile-nav">
-                                <i class="material-icons">menu</i>
-                            </a>
-                            <ul class="right hide-on-med-and-down">
-                                <li {% if active_page == 'index' %}class="active"{% endif %}>
-                                    <a href="{{ url_for('main.index') }}">Home</a>
-                                </li>
-                                <li {% if active_page == 'monitors' %}class="active"{% endif %}>
-                                    <a href="{{ url_for('monitors.index') }}">Monitors</a>
-                                </li>
-                                <li {% if active_page == 'integrations' %}class="active"{% endif %}>
-                                    <a href="#">Integrations</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </nav> <!-- end top navigation -->
-            </div>
+<header>
+    <nav class="deep-orange darken-2">
+        <div class="container">
+            <div class="nav-wrapper">
+                <a href="#" class="brand-logo">EP Monitor</a>
+                <a href="#" data-activates="side-nav" class="button-collapse show-on-large right">
+                    <i class="material-icons">menu</i>
+                </a>
+                <ul class="right hide-on-med-and-down">
+                    <li class="{% if active_page == 'index' %}active{% endif %}">
+                        <a href="{{ url_for('main.index') }}">Dashboard</a>
+                    </li>
+                    <li class="{% if active_page == 'monitors' %}active{% endif %}">
+                        <a href="{{ url_for('monitors.index') }}">Monitors</a>
+                    </li>
+                    <li class="{% if active_page == 'integrations' %}active{% endif %}">
+                        <a href="#">Integrations</a>
+                    </li>
+                    <li class="{% if active_page == 'settings' %}active{% endif %}">
+                        <a href="#">Settings</a>
+                    </li>
+                </ul>
 
-            <!-- sidebar nav -->
-            <ul class="side-nav" id="mobile-nav">
-                <li {% if active_page == 'index' %}class="active"{% endif %}>
-                    <a href="{{ url_for('main.index') }}">
-                        <i class="material-icons">show_chart</i>Monitors
-                    </a>
-                </li>
-            </ul> <!-- end sidebar nav -->
-        </header>
+                <!-- Side Navigation -->
+                <ul id="side-nav" class="side-nav">
+                    <li>
+                        <div class="user-view">
+                            <div class="background">
+                                <img src="https://source.unsplash.com/1024x1204/?clouds">
+                            </div>
+                            <a href="#">
+                                <img src="https://source.unsplash.com/64x64/?user,account" class="circle">
+                            </a>
+                            <a href="#">
+                                <span class="blue-grey-text">John Doe</span>
+                            </a>
+                            <a href="#">
+                                <span class="email blue-grey-text">jdoe@gmail.com</span>
+                            </a>
+                        </div>
+                    </li>
+                    <li class="active"><a href="#"><i class="material-icons">dashboard</i> Dashboard</a></li>
+                    <li class="{% if active_page == 'monitors' %}active{% endif %}">
+                        <a href="{{ url_for('monitors.index') }}">Monitors</a>
+                    </li>
+                    <li class="{% if active_page == 'integrations' %}active{% endif %}">
+                        <a href="#">Integrations</a>
+                    </li>
+                    <li class="{% if active_page == 'settings' %}active{% endif %}">
+                        <a href="#">Settings</a>
+                    </li>
+                    <li><div class="divider"></div></li>
+                    <li><a class="subheader">Account Controls</a></li>
+                    <li><a class="waves-effect" href="#">Logout</a></li>
+                </ul><!-- end side navigation -->
+            </div>
+        </div>
+    </nav><!-- Main application navigation -->
+</header>

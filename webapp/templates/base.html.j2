@@ -6,27 +6,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
         {% block css %}
-        <!-- Import Google Icon Font -->
+        <!-- Import Fonts -->
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
         <!-- Import Materialize CSS -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
-
-        <style>
-        body {
-            display: flex;
-            min-height: 100vh;
-            flex-direction: column;
-        }
-
-        main {
-            flex: 1 0 auto;
-        }
-
-        .monitor-label {
-            font-size: 1.2em;
-        }
-
-        </style>
         {% endblock %}
 
         {% if title %}
@@ -37,32 +21,13 @@
     </head>
 
     <body>
-        {% include "_topnav.html.j2" %}
+        {% include '_topnav.html.j2' %}
 
-        {% block main %}
-        <main class="container" role="main">
-            {% block content %}{% endblock %}
-        </main>
-        {% endblock %}
-
-        <!-- footer -->
-        <footer class="page-footer deep-orange">
-            <div class="container">
-                <div class="row">
-                    <div class="col l6 s12">
-                        <h5>End Point Monitoring</h5>
-                        <p>Blah Blah Blah</p>
-                    </div>
-                </div>
-            </div>
-        </footer>
-        <!-- end footer -->
+        {% block content %}{% endblock %}
 
         {% block javascript %}
         <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
-        <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/all.js" integrity="sha384-SlE991lGASHoBfWbelyBPLsUlwY1GwNDJo3jSJO04KZ33K2bwfV9YBauFfnzvynJ" crossorigin="anonymous"></script>
-
 
         <script type="text/javascript">
             $(document).ready(function() {
@@ -77,9 +42,10 @@
             {% endfor %}
             {% endif %}
             {% endwith %}
-        </script>
 
+        </script>
         {% endblock %}
+
     </body>
 
 </html>
