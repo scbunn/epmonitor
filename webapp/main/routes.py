@@ -67,4 +67,5 @@ def index():
     the applicaiton.
 
     """
-    return render_template('index.html.j2', stats=runtimeStats.stats)
+    return render_template('index.html.j2', stats=runtimeStats.stats,
+                           endpoint_count=Monitor.query.count())

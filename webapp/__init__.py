@@ -32,6 +32,7 @@ def configure_extensions(app, config):
     # TODO: FixMe, I shouldn't have to pass app.logger here.  Python logging
     # is a PITA
     requestManager.logger = app.logger
+    runtimeStats.logger = app.logger
     app.logger.debug("Flask extensions registered.")
 
 

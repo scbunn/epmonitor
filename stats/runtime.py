@@ -5,12 +5,22 @@ application.
 
 
 """
+import logging
 import collections
 import psutil
 import os
 import threading
 import time
 from datetime import datetime, timezone
+
+
+Thread = collections.namedtuple('Thread', [
+    'name',
+    'status',
+    'endpoint',
+    'frequency',
+    'alive'
+])
 
 
 class RuntimeStats(object):
@@ -90,6 +100,7 @@ class RuntimeStats(object):
 
         self.rm = request_manager
         self.lock = threading.Lock()
+        self.logger = logging.getLogger(__name__)
         collect_thread = threading.Thread(target=self.collect, args=())
         collect_thread.daemon = True
         collect_thread.start()
@@ -188,13 +199,6 @@ class RuntimeStats(object):
             return {'requestManager': {}}
 
         threads = self.rm.threads
-        Thread = collections.namedtuple('Thread', [
-            'name',
-            'status',
-            'endpoint',
-            'frequency',
-            'alive'
-        ])
 
         # iterate over threads and build Thread tuples;
         # doing this in a list comp is difficult to read
@@ -204,8 +208,11 @@ class RuntimeStats(object):
             endpoint = ''
             frequency = ''
             if len(message) > 0:
-                endpoint = message[1]
-                frequency = message[2]
+                try:
+                    endpoint = message[1]
+                    frequency = message[2]
+                except IndexError as ex:
+                    pass
             _t = Thread(
                 t.name,
                 message[0],

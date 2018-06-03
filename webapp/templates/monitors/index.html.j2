@@ -37,10 +37,10 @@
                             {% for monitor in monitors %}
                             <tr>
                                 <td><a href="{{ url_for('monitors.details', slug=monitor.slug) }}">{{ monitor.name }}</a></td>
-                                <td>{{ monitor.frequency }}</td>
-                                <td>{% if monitor.slug in results %}{{ '%0.2f' | format(results[monitor.slug][-1].elapsed|float) }} ms{% else %}-{% endif %}</td>
-                                <td>{% if monitor.slug in results %}{{ results[monitor.slug][-1].status_code }}{% else %}-{% endif %}</td>
-                                <td>{% if monitor.slug in results %}{{ '%0.2f' | format(results[monitor.slug] | percentile(95)) }}{% else %}-{% endif %}</td>
+                                <td>{{ monitor.frequency}}</td>
+                                <td>{% if monitor.slug in results %}{{ '%0.0f' | format(results[monitor.slug][-1].elapsed) }} ms{% endif %}</td>
+                                <td>{% if monitor.slug in results %}{{ results[monitor.slug][-1].status_code }}{% endif %}</td>
+                                <td>{% if monitor.slug in results %}{{ '%0.0f' | format(results[monitor.slug]|percentile(95)) }} ms{% endif %}</td>
                                 <td>
                                     <i class="{% if monitor.payload %}fas fa-check-circle{% else %}fas fa-times-circle{% endif %}"></i>
                                 </td>

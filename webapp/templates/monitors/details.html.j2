@@ -77,7 +77,7 @@
                             <tbody>
                                 {% for window in results %}
                                 <tr>
-                                    <td>{{ moment(window.datetime).format('YYYY-MM-DD HH:mm:ss ZZ') }}</td>
+                                    <td>{{ moment(window.date).format('YYYY-MM-DD HH:mm:ss ZZ') }}</td>
                                     <td>{{ '%0.2f' | format(window.elapsed|float) }} ms</td>
                                     <td>{{ window.status_code }}</td>
                                 </tr>

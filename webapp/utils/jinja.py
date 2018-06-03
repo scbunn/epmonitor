@@ -5,6 +5,7 @@ This module contains custom jinja filters and utilities.
 
 """
 import numpy as np
+from collections import Counter
 
 
 def megabytes(_bytes):
@@ -20,21 +21,20 @@ def gigabytes(_bytes):
 def availability(window):
     """Return the availability percentage of `window`.
 
-    A window data point is considered 'available' if the status code is 200.
+    A window data point is considered 'available' if the status was success
 
     """
-    success = [r['status_code'] for r in window if r['status_code'] == 200]
+    success = Counter([r for r in window if r.status])
     return (len(success) / len(window)) * 100
 
 
 def failRate(window):
     """Return the percentage of results in `window` that failed.
 
-    A window data point is considered to have failed if the status code is not
-    200.
+    A window data point is considered to have failed if the request failed
 
     """
-    failures = [r['status_code'] for r in window if r['status_code'] != 200]
+    failures = Counter([r for r in window if not r.status])
     if failures:
         return (len(failures)/len(window)) * 100
     return 0  # no failures have occurred
@@ -51,7 +51,7 @@ def percentile(window, p):
     if not isinstance(window, list):
         raise ValueError("percentile window expects a list")
 
-    if isinstance(window[0], dict):  # we have a list of Monitor Results
+    if isinstance(window[0], tuple):  # we have a list of Monitor Results
         arry = np.array(epresult_to_list(window))
     else:  # assume we have a list of numeric data
         arry = np.array(window)
@@ -62,7 +62,7 @@ def stddev(window):
     """Return the standard deviation of `monitor_result`."""
     if not isinstance(window, list):
         raise ValueError('stddev window expected to be a list')
-    if isinstance(window[0], dict):
+    if isinstance(window[0], tuple):
         data = epresult_to_list(window)
     else:
         data = window
@@ -76,4 +76,4 @@ def epresult_to_list(result):
     endpoint's elapsed time window.
 
     """
-    return [r['elapsed'] for r in result]
+    return [r.elapsed for r in result]

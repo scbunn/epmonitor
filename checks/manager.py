@@ -13,6 +13,18 @@ import time
 import queue
 
 
+RequestDimension = collections.namedtuple('RequestDimension', [
+    'date',           # datetime.datetime
+    'timestamp',      # timestamp()
+    'status',         # Boolean (did the request fail or not)
+    'status_code',    # HTTP status code
+    'TTFB',           # Time to first Byte
+    'elapsed',        # Total elapsed time
+    'content',        # Content of the Request
+    'message',        # Any passed message (usually failure reason)
+])
+
+
 class RequestsManager(object):
 
     def __init__(self, thread_count=1, logger=None):
@@ -165,7 +177,7 @@ class EndpointRequestThread(threading.Thread):
         self.status = "Waiting for an endpoint request"
         self.logger = logging.getLogger(__name__)
 
-    def update(self, endpoint, dimensions):
+    def update(self, endpoint, request_dimension):
         """Update the results.
 
         Update `request_results` with the latest data from a request.
@@ -176,7 +188,33 @@ class EndpointRequestThread(threading.Thread):
             if endpoint not in self.request_results:
                 self.request_results[endpoint] = collections.deque(
                     maxlen=self.window_size)
-            self.request_results[endpoint].append(dimensions)
+            self.request_results[endpoint].append(request_dimension)
+
+    def _build_dimensions(self, result, message, start, end, response=None):
+        """Build a `RequestDimension`
+
+        Build a new `RequestDimension` for the current request.
+
+        """
+        if result:  # the request was successful
+            status_code = response.status_code
+            content = response.content
+            TTFB = sum((r.elapsed for r in response.history),
+                       response.elapsed).total_seconds() * 1000.0
+        else:
+            status_code = 0
+            content = None
+            TTFB = 0
+        return RequestDimension(
+            start,
+            start.timestamp(),
+            result,
+            status_code,
+            TTFB,
+            (end - start).total_seconds() * 1000.0,
+            content,
+            message
+        )
 
     def request(self, endpoint):
         """Make a request to the `endpoint`.
@@ -184,30 +222,20 @@ class EndpointRequestThread(threading.Thread):
         Make the request to the passed `endpoint` and record the results.
 
         """
-        # TODO: This is starting to get messy, clean this up
         self.status = f"Sending a request to an endpoint, {endpoint.name}"
-        dimensions = {}
-        dimensions['datetime'] = datetime.datetime.now(datetime.timezone.utc)
-        dimensions['timestamp'] = dimensions['datetime'].timestamp()
+        start = datetime.datetime.now(datetime.timezone.utc)
+        result = True
+        message = ''
+        response = None
         try:
             url, payload = endpoint.request
             response = requests.request(endpoint.verb, url, **payload)
-            dimensions['content'] = response.content
-            dimensions['status_code'] = response.status_code
-            dimensions['TTFB'] = sum((r.elapsed for r in response.history),
-                                     response.elapsed).total_seconds() * 1000.0
-        # TODO: Fix me; do something useful with these errors
         except requests.exceptions.RequestException as ex:
-            dimensions['status_code'] = 500
-            dimensions['failure_reason'] = f"{ex}"
-
-        request_end = datetime.datetime.now(datetime.timezone.utc)
-        dimensions['elapsed'] = \
-            (request_end - dimensions['datetime']).total_seconds() * 1000.0
-        self.update(
-            endpoint=endpoint,
-            dimensions=dimensions
-        )
+            result = False
+            message = f"{ex}"
+        end = datetime.datetime.now(datetime.timezone.utc)
+        rd = self._build_dimensions(result, message, start, end, response)
+        self.update(endpoint, rd)
 
     def wait_for_frequency(self, frequency, name):
         """wait for this run's frequency to expire"""
