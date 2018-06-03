@@ -10,6 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_moment import Moment
 from checks.manager import RequestsManager
+from stats.runtime import RuntimeStats
 from webapp.utils.jinja import (
     percentile, failRate, availability, stddev, megabytes, gigabytes)
 
@@ -18,6 +19,8 @@ db = SQLAlchemy()
 migrate = Migrate()
 moment = Moment()
 requestManager = RequestsManager()
+runtimeStats = RuntimeStats()
+runtimeStats.rm = requestManager
 
 
 def configure_extensions(app, config):

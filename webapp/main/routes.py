@@ -6,7 +6,7 @@ This module contains the main routes of the web application.
 from flask import render_template, flash, redirect, url_for, request
 from webapp.main import bp
 from webapp.models import Monitor
-from webapp import requestManager
+from webapp import requestManager, runtimeStats
 from checks.endpoint import Endpoint
 
 
@@ -67,4 +67,4 @@ def index():
     the applicaiton.
 
     """
-    return render_template('index.html.j2', stats={})
+    return render_template('index.html.j2', stats=runtimeStats.stats)

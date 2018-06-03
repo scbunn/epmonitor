@@ -1,9 +1,9 @@
-{% set mem_used_pct = (stats['proc']['memory'].uss / stats['system']['memory'].total) * 100 %}
-{% set free_memory_pct = (stats['system']['memory'].available / stats['system']['memory'].total) * 100 %}
-{% set system = stats['system'] %}
-{% set proc = stats['proc'] %}
-{% set rm = stats['requestManager'] %}
+{% set cpu = stats['cpu'] %}
+{% set memory = stats['memory'] %}
+{% set network = stats['network'] %}
+{% set stack = stats['stack'] %}
 
+{% extends "base.html.j2" %}
 {% block content %}
 <section class="section section-stats center">
     <div class="row">
@@ -11,9 +11,9 @@
             <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
                 <i class="fas fa-microchip fa-lg"></i>
                 <h5>CPU Utilization %</h5>
-                <h3 class="count">{{ system['cpu_percent'] }}</h3>
+                <h3 class="count">{{ cpu['utilization'] }}</h3>
                 <div class="progress grey lighten-1">
-                    <div class="determinate white" style="width: {{ system['cpu_percent'] }}%;">
+                    <div class="determinate white" style="width: {{ cpu['utilization'] }}%;">
                     </div>
                 </div>
             </div>
@@ -22,9 +22,9 @@
             <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
                 <i class="fas fa-memory fa-lg"></i>
                 <h5>Free Memory (MB)</h5>
-                <h3 class="count">{{ '%0.2f' | format(system['memory'].available|megabytes) }}</h3>
+                <h3 class="count">{{ '%0.2f' | format(memory['free']|megabytes) }}</h3>
                 <div class="progress grey lighten-1">
-                    <div class="determinate white" style="width: {{ free_memory_pct }}%;">
+                    <div class="determinate white" style="width: {{ memory['used_pct'] }}%;">
                     </div>
                 </div>
             </div>
@@ -33,7 +33,7 @@
             <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
                 <i class="fas fa-stream fa-lg"></i>
                 <h5>Thread Count</h5>
-                <h3 class="count">{{ proc['thread_count'] }}</h3>
+                <h3 class="count">{{ stack['app_thread_count'] }}</h3>
                 <div class="progress grey lighten-1">
                     <div class="determinate white" style="width: 0%;">
                     </div>
@@ -44,7 +44,7 @@
             <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
                 <i class="fas fa-chart-line fa-lg"></i>
                 <h5>Monitored Endpoints</h5>
-                <h3 class="count">{{ rm['endpoint_count'] }}</h3>
+                <h3 class="count">{{ endpoint_count }}</h3>
                 <div class="progress grey lighten-1">
                     <div class="determinate white" style="width: 0%;">
                     </div>
@@ -60,37 +60,37 @@
         <div class="col s12 m4 l2">
             <div class="card-panel deep-orange-text text-darken-4 center">
                 <h5>PID</h5>
-                <h3 class="count grey-text text-darken-4">{{ proc['pid'] }}</h3>
+                <h3 class="count grey-text text-darken-4">{{ stack['pid'] }}</h3>
             </div>
         </div><!-- end of stat panel: PID -->
         <div class="col s12 m4 l2">
             <div class="card-panel deep-orange-text text-darken-4 center">
                 <h5>Max Threads</h5>
-                <h3 class="count grey-text text-darken-4">{{ rm['thread_count'] }}</h3>
+                <h3 class="count grey-text text-darken-4">{{ stack['rm_max_threads'] }}</h3>
             </div>
         </div><!-- end of stat panel: Max Thread Count -->
         <div class="col s12 m4 l2">
             <div class="card-panel deep-orange-text text-darken-4 center">
                 <h5>Running Threads</h5>
-                <h3 class="count grey-text text-darken-4">{{ rm['threads']['running'] }}</h3>
+                <h3 class="count grey-text text-darken-4">{{ stack['rm_running_threads'] }}</h3>
             </div>
         </div><!-- end of stat panel: Running Threads -->
         <div class="col s12 m4 l2">
             <div class="card-panel deep-orange-text text-darken-4 center">
                 <h5>Queue</h5>
-                <h3 class="count grey-text text-darken-4">{{ rm['queue_size'] }}</h3>
+                <h3 class="count grey-text text-darken-4">{{ stack['queue_size'] }}</h3>
             </div>
         </div><!-- end of stat panel: Queue Size -->
         <div class="col s12 m4 l2">
             <div class="card-panel deep-orange-text text-darken-4 center">
                 <h5>Connections</h5>
-                <h3 class="count grey-text text-darken-4">{{ proc['connections']|length }}</h3>
+                <h3 class="count grey-text text-darken-4">{{ network['connections_total'] }}</h3>
             </div>
         </div><!-- end of stat panel: Connection Count -->
         <div class="col s12 m4 l2">
             <div class="card-panel deep-orange-text text-darken-4 center">
                 <h5>Memory (MB)</h5>
-                <h3 class="count grey-text text-darken-4">{{ '%0.2f' |format(proc['memory'].uss|megabytes) }}</h3>
+                <h3 class="count grey-text text-darken-4">{{ '%0.2f' |format(memory['consumed_by_stack']|megabytes) }}</h3>
             </div>
         </div><!-- end of stat panel: App Memory -->
 
@@ -120,11 +120,19 @@
 
 <section class="section section-system">
     <div class="row">
-        <div class="col s12">
+        <div class="col s12 m6 l6">
             <div class="card">
                 <div class="card-content">
-                    <span class="card-title deep-orange-text text-darken-4">Network IO</span>
+                    <span class="card-title deep-orange-text text-darken-4">Network IO Total</span>
                     <canvas id="chart-network-utilization" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col s12 m6 l6">
+            <div class="card">
+                <div class="card-content">
+                    <span class="card-title deep-orange-text text-darken-4">Network IO per second</span>
+                    <canvas id="chart-network-util-ps" height="100"></canvas>
                 </div>
             </div>
         </div>
@@ -147,7 +155,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for conn in proc['connections'] %}
+                            {% for conn in network['connections'] %}
                             <tr>
                                 <td>{{ conn.laddr.ip }}:{{ conn.laddr.port }}</td>
                                 {% if conn.raddr %}
@@ -176,7 +184,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for t in proc['threads'] %}
+                            {% for t in stack['stack_threads'] %}
                             <tr>
                                 <td>{{ t.id }}</td>
                                 <td>{{ t.user_time }}</td>
@@ -201,7 +209,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for t in rm['threads'].active %}
+                            {% for t in stack['rm_threads'] %}
                             <tr>
                                 <td>{{ t[0] }}</td>
                                 <td>{{ t[1] }}</td>
@@ -258,82 +266,244 @@ function countStats() {
 
 </script>
 
-<script type="text/javascript">
-    var ctx_mem_chart = document.getElementById("chart-system-memory").getContext('2d');
-var memoryChart = new Chart(ctx_mem_chart, {
-    type: 'line',
-    data: {
-        datasets: [
-            {
-                label: 'Total',
-                data: [
-                    {{ system['memory'].total|megabytes }},
-                    {{ system['memory'].total|megabytes }},
-                    {{ system['memory'].total|megabytes }},
-                    {{ system['memory'].total|megabytes }},
-                    {{ system['memory'].total|megabytes }},
-                    {{ system['memory'].total|megabytes }}
-                ]
-            },
-            {
-                label: 'Available',
-                data: [
-                    {{ system['memory'].available|megabytes }},
-                    {{ system['memory'].available|megabytes }},
-                    {{ system['memory'].available|megabytes }},
-                    {{ system['memory'].available|megabytes }},
-                    {{ system['memory'].available|megabytes }},
-                    {{ system['memory'].available|megabytes }}
-                ]
-            }
-        ]
-    },
-    options: {
-    }
-});
+<!-- ChartJS Graphs -->
 
-var ctx_cpu_chart = document.getElementById("chart-cpu-utilization").getContext('2d');
-var cpuChart = new Chart(ctx_cpu_chart, {
-    type: 'line',
-    data: {
-        datasets: [
-            {
-                label: 'User',
-                data: [
-                    {{ system['cpu_times'].user }},
-                    {{ system['cpu_times'].user }},
-                    {{ system['cpu_times'].user }},
-                    {{ system['cpu_times'].user }},
-                    {{ system['cpu_times'].user }},
-                    {{ system['cpu_times'].user }},
-                ]
-            },
-            {
-                label: 'System',
-                data: [
-                    {{ system['cpu_times'].system }},
-                    {{ system['cpu_times'].system }},
-                    {{ system['cpu_times'].system }},
-                    {{ system['cpu_times'].system }},
-                    {{ system['cpu_times'].system }},
-                    {{ system['cpu_times'].system }},
-                ]
-            },
-            {
-                label: 'Idle',
-                data: [
-                    {{ system['cpu_times'].idle }},
-                    {{ system['cpu_times'].idle }},
-                    {{ system['cpu_times'].idle }},
-                    {{ system['cpu_times'].idle }},
-                    {{ system['cpu_times'].idle }},
-                    {{ system['cpu_times'].idle }},
-                ]
+<script type="text/javascript">
+    var ctx_net_ps = document.getElementById("chart-network-util-ps").getContext('2d');
+
+    var networkChartPS = new Chart(ctx_net_ps, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'recieved/s',
+                    fill: false,
+                    backgroundColor: 'rgba(254, 2, 41, 0.8)',
+                    borderColor: 'rgba(254, 2, 41, 1)',
+                    data: [
+                        {% for dp, ts in network['bytes_recv_s'] %}
+                        { y: {{ dp }}, x: new Date({{ ts }} * 1000)},
+                        {% endfor %}
+                    ]
+                },
+                {
+                    label: 'sent/s',
+                    fill: false,
+                    backgroundColor: 'rgba(255, 208, 0, 0.8)',
+                    borderColor: 'rgba(255, 208, 0, 1)',
+                    data: [
+                        {% for dp, ts in network['bytes_sent_s'] %}
+                        { y: {{ dp }}, x: new Date({{ ts }} * 1000)},
+                        {% endfor %}
+                    ]
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                xAxes: [{
+                    display: true,
+                    type: 'time',
+                    time: {
+                        unit: 'second'
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'time'
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: "megabytes"
+                    }
+                }]
             }
-        ]
-    },
-    options: {
-    }
-});
+
+        }
+    });
 </script>
+    
+<script type="text/javascript">
+    var ctx_net_chart = document.getElementById("chart-network-utilization").getContext('2d');
+    var networkChart = new Chart(ctx_net_chart, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'recieved',
+                    fill: false,
+                    backgroundColor: 'rgba(254, 2, 41, 0.8)',
+                    borderColor: 'rgba(254, 2, 41, 1)',
+                    data: [
+                        {% for dp, ts in network['bytes_recv'] %}
+                        { y: {{ dp|megabytes }}, x: new Date({{ ts }} * 1000)},
+                        {% endfor %}
+                    ]
+                },
+                {
+                    label: 'Sent',
+                    fill: false,
+                    backgroundColor: 'rgba(255, 208, 0, 0.8)',
+                    borderColor: 'rgba(255, 208, 0, 1)',
+                    data: [
+                        {% for dp, ts in network['bytes_sent'] %}
+                        { y: {{ dp|megabytes }}, x: new Date({{ ts }} * 1000)},
+                        {% endfor %}
+                    ]
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                xAxes: [{
+                    display: true,
+                    type: 'time',
+                    time: {
+                        unit: 'second'
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'time'
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: "megabytes"
+                    }
+                }]
+            }
+        }
+    });
+</script>
+
+<script type="text/javascript">
+
+    var ctx_mem_chart = document.getElementById("chart-system-memory").getContext('2d');
+    var memoryChart = new Chart(ctx_mem_chart, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'total',
+                    fill: false,
+                    backgroundColor: 'rgba(254, 2, 41, 0.8)',
+                    borderColor: 'rgba(254, 2, 41, 1)',
+                    data: [
+                        {% for dp, ts in memory['total'] %}
+                        { y: {{ dp|megabytes }}, x: new Date({{ ts }} * 1000)},
+                        {% endfor %}
+                    ]
+                },
+                {
+                    label: 'available',
+                    fill: true,
+                    backgroundColor: 'rgba(255, 208, 0, 0.8)',
+                    borderColor: 'rgba(255, 208, 0, 1)',
+                    data: [
+                        {% for dp, ts in memory['available'] %}
+                        { y: {{ dp|megabytes }}, x: new Date({{ ts }} * 1000)},
+                        {% endfor %}
+                    ]
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                xAxes: [{
+                    display: true,
+                    type: 'time',
+                    time: {
+                        unit: 'second'
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'time'
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: "megabytes"
+                    }
+                }]
+            }
+        }
+    });
+</script>
+
+<script type="text/javascript">
+    var ctx_cpu_chart = document.getElementById("chart-cpu-utilization").getContext('2d');
+    var cpuChart = new Chart(ctx_cpu_chart, {
+        type: 'line',
+        data: {
+            datasets: [
+                {
+                    label: 'User',
+                    fill: false,
+                    backgroundColor: 'rgba(254, 2, 41, 0.8)',
+                    borderColor: 'rgba(254, 2, 41, 1)',
+                    data: [
+                        {% for dp, ts in cpu['user'] %}
+                        { y: {{ dp }}, x: new Date({{ ts }} * 1000)},
+                        {% endfor %}
+                    ]
+                },
+                {
+                    label: 'System',
+                    fill: false,
+                    backgroundColor: 'rgba(255, 208, 0, 0.8)',
+                    borderColor: 'rgba(255, 208, 0, 1)',
+                    data: [
+                        {% for dp, ts in cpu['system'] %}
+                        { y: {{ dp }}, x: new Date({{ ts }} * 1000)},
+                        {% endfor %}
+                    ]
+                },
+                {
+                    label: 'Idle',
+                    fill: false,
+                    backgroundColor: 'rgba(240, 108, 0, 0.8)',
+                    borderColor: 'rgba(240, 108, 0, 1)',
+                    data: [
+                        {% for dp, ts in cpu['idle'] %}
+                        { y: {{ dp }}, x: new Date({{ ts }} * 1000)},
+                        {% endfor %}
+                    ]
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                xAxes: [{
+                    display: true,
+                    type: 'time',
+                    time: {
+                        unit: 'second'
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'time'
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'percentage'
+                    }
+                }]
+            }
+        }
+    });
+</script>
+
 {% endblock %}
