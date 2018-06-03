@@ -29,7 +29,8 @@ setup(
         'sqlalchemy-json',
         'flask-wtf',
         'flask-moment',
-        'numpy'
+        'numpy',
+        'psutil'
     ],
     tests_require=[
         'pytest',

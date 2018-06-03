@@ -10,7 +10,8 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_moment import Moment
 from checks.manager import RequestsManager
-from webapp.utils.jinja import percentile, failRate, availability, stddev
+from webapp.utils.jinja import (
+    percentile, failRate, availability, stddev, megabytes, gigabytes)
 
 # Application Globals; Required for Flask application factories
 db = SQLAlchemy()
@@ -44,6 +45,11 @@ def register_blueprints(app):
     app.register_blueprint(monitors_blueprint, url_prefix='/monitors')
     app.logger.debug("Registered monitors blueprint.")
 
+    # Register the settings blueprint
+    from webapp.settings import bp as settings_blueprint
+    app.register_blueprint(settings_blueprint, url_prefix='/settings')
+    app.logger.debug("Registered settings blueprint")
+
 
 def configure_jinja_extensions(app):
     """Register Jinja extensions.
@@ -55,6 +61,8 @@ def configure_jinja_extensions(app):
     app.jinja_env.filters['failRate'] = failRate
     app.jinja_env.filters['availability'] = availability
     app.jinja_env.filters['stddev'] = stddev
+    app.jinja_env.filters['megabytes'] = megabytes
+    app.jinja_env.filters['gigabaytes'] = gigabytes
     app.logger.debug("Custom Jinja extensions registered.")
 
 

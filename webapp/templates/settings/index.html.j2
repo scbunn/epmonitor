@@ -1,0 +1,216 @@
+{% extends "base.html.j2" %}
+{% set active_page = 'setttings' %}
+
+<!--  Data Structure
+        'requestManager': {
+            'thread_count': requestManager.thread_count,
+            'queue_size': requestManager.request_queue.qsize(),
+            'threads': {
+                'running': len(threads),
+                'active': [(t.name, t.status, t.is_alive()) for t in threads]
+            }
+        }
+
+        'system': {
+            'cpu_percent': psutil.cpu_percent(interval=None),
+            'cpu_times': psutil.cpu_times(percpu=False),
+            'memory': psutil.virtual_memory(),
+            'netio': psutil.net_io_counters(),
+        },
+        'proc': {
+            'pid': p.pid,
+            'parent': p.parent(),
+            'thread_count': p.num_threads(),
+            'threads': p.threads(),
+            'connections': p.connections(),
+            'memory': p.memory_full_info(),
+            'created': p.create_time()
+        }
+
+
+-->
+{% block content %}
+<div class="row">
+    <div class="col s12">
+        <h1>Runtime Settings</h1>
+        <div class="card">
+            <div class="card-image">
+                <canvas id="monitorRealtime" width=1024" height=300"></canvas>
+            </div>
+            <div class="card-tabs">
+                <ul class="tabs tabs-fixed-width">
+                    <li class="tab"><a href="#overview">Overview</a></li>
+                    <li class="tab"><a href="#system">System</a></li>
+                    <li class="tab"><a href="#rm">Request Manager</a></li>
+                    <li class="tab"><a href="#config">Configuration</a></li>
+                </ul>
+            </div>
+            <div class="card-content deep-orange lighten-4">
+                <div id="overview">
+                    <p class="center text-blue-grey text-darken-r">EPMonitor Overview</p>
+                    <table class="responsive-table">
+                        <thead>
+                            <tr>
+                                <th>Started</td>
+                                <th>CPU Utilization</th>
+                                <th>Memory</th>
+                                <th>Thread Count</th>
+                                <th>Network IO (sent/recv)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ moment(stats['proc']['created']).fromNow() }}</td>
+                                <td>{{ stats['system']['cpu_percent'] }}%</td>
+                                <td>{{ '%0.2f' | format(stats['system']['memory'].total|megabytes) }} MB</td>
+                                <td>{{ stats['proc']['thread_count'] }}</td>
+                                <td>{{ '%0.2f' | format(stats['system']['netio'].bytes_sent|megabytes) }} MB/{{ '%0.2f' | format(stats['system']['netio'].bytes_recv|megabytes) }} MB</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="system">
+                    <p class="center text-blue-grey text-darken-r"><strong>System</strong></p>
+                    <table class="responsive-table">
+                        <thead>
+                            <tr>
+                                <th>CPU User</th>
+                                <th>CPU System</th>
+                                <th>Context Switches</th>
+                                <th>Mem Total</th>
+                                <th>Mem Avail</th>
+                                <th>Mem Used</th>
+                                <th>Mem Free</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ stats['system']['cpu_times'].user }}</td>
+                                <td>{{ stats['system']['cpu_times'].system }}</td>
+                                <td>{{ stats['system']['cpu_stats'].ctx_switches }}</td>
+                                <td>{{ stats['system']['memory'].total }}</td>
+                                <td>{{ stats['system']['memory'].available }}</td>
+                                <td>{{ stats['system']['memory'].used }}</td>
+                                <td>{{ stats['system']['memory'].free }}</td>
+                            </tr>
+                        </tbody>
+                    </table><hr>
+                    <p class="center text-blue-grey text-darken-r"><strong>EP Monitor</strong></p>
+                    <table class="responsive-table">
+                        <thead>
+                            <tr>
+                                <th>PID</th>
+                                <th>Threads</th>
+                                <th>Connections</th>
+                                <th>Memory Used</th>
+                                <th>Page Faults</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ stats['proc']['pid'] }}</td>
+                                <td>{{ stats['proc']['thread_count'] }}</td>
+                                <td>{{ stats['proc']['connections']|length }}</td>
+                                <td>{{ '%0.2f' | format(stats['proc']['memory'].uss|megabytes) }} MB</td>
+                                <td>{{ stats['proc']['memory'].pfaults }}</td>
+                            </tr>
+                        </tbody>
+                    </table><hr>
+                    <p class="center text-blue-grey text-darken-r"><strong>EP Monitor Threads</strong></p>
+                    <table class="responsive-table">
+                        <thead>
+                            <tr>
+                                <th>id</th>
+                                <th>CPU (User)</th>
+                                <th>CPU (System)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in stats['proc']['threads'] %}
+                            <tr>
+                                <td>{{ t.id }}</td>
+                                <td>{{ t.user_time }}</td>
+                                <td>{{ t.system_time }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table><hr>
+                    <p class="center text-blue-grey text-darken-r"><strong>Network</strong></p>
+                    <table class="responsive-table">
+                        <thead>
+                            <tr>
+                                <th>Local Address</th>
+                                <th>Remote Address</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for conn in stats['proc']['connections'] %}
+                            <tr>
+                                <td>{{ conn.laddr.ip }}:{{ conn.laddr.port }}</td>
+                                {% if conn.raddr %}
+                                <td>{{ conn.raddr.ip }}:{{ conn.raddr.port }}</td>
+                                {% else %}
+                                <td></td>
+                                {% endif %}
+                                <td>{{ conn.status }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div id="rm">
+                    <p class="center text-blue-grey text-darken-r">Request Manager</p>
+                    <table class="responsive-table">
+                        <thead>
+                            <tr>
+                                <th>Max Thread Count</th>
+                                <th>Running Thread Count</th>
+                                <th>Endpoints</th>
+                                <th>Queue Size</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>{{ stats['requestManager'].thread_count }}</td>
+                                <td>{{ stats['requestManager']['threads'].running }}</td>
+                                <td>{{ stats['requestManager'].endpoint_count }}</td>
+                                <td>{{ stats['requestManager'].queue_size }}</td>
+                            </tr>
+                        </tbody>
+                    </table><hr>
+                    <p class="center text-blue-grey text-darken-r">Request Manager Threads</p>
+                    <table class="responsive-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Alive</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in stats['requestManager']['threads'].active %}
+                            <tr>
+                                <td>{{ t[0] }}</td>
+                                <td>{{ t[1] }}</td>
+                                <td>
+                                    <i class="{% if t[2] %}fas fa-check-circle{% else %}fas fa-times-circle{% endif %}"></i>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div id="config">
+                    <p class="center text-blue-grey text-darken-r">Configuration</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ super() }}
+{{ moment.include_moment() }}
+{% endblock %}

@@ -22,7 +22,9 @@ config_class = config.configuration()
 def configure_logging(config):
     """Configure application logging for `app`"""
     from logging.config import dictConfig
-    default_format = '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+    default_format = \
+        '[%(asctime)s] %(levelname)s ' \
+        'in %(module)s (%(threadName)s): %(message)s'
     logging_config = {
         'version': 1,
         'formatters': {
@@ -47,14 +49,14 @@ def configure_logging(config):
 
 
 def signal_handler(signal, frame):
-    print("Cleaning up application stack...")
+    logging.getLogger(__name__).info("Cleaning up application stack")
     teardown()
     sys.exit(0)
 
 
 def teardown():
     requestManager.clear()
-    requestManager.stop()
+    requestManager.stop(join=True)
 
 
 configure_logging(config_class)

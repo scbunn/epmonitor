@@ -7,6 +7,16 @@ This module contains custom jinja filters and utilities.
 import numpy as np
 
 
+def megabytes(_bytes):
+    """Convert _bytes into Megabytes."""
+    return _bytes / (1024 ** 2)
+
+
+def gigabytes(_bytes):
+    """Convert _bytes into Gigabytes."""
+    return _bytes / (1024 ** 3)
+
+
 def availability(window):
     """Return the availability percentage of `window`.
 
