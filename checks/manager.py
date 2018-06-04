@@ -91,11 +91,13 @@ class RequestsManager(object):
             self.logger.debug(f"Stopping {t.name}")
             t.should_die = True
 
-            # NOTE: We don't join() by default here; there is a risk that we
-            #       leave behind orphaned threads.
-            if join:
-                self.logger.debug(f"Waiting for {t.name} to die")
+       # NOTE: We don't join() by default here; there is a risk that we
+       #       leave behind orphaned threads.
+        if join:
+            for t in self.threads:
+                self.logger.debug(f"joining {t.name}")
                 t.join()
+
         self.threads = []
 
 
@@ -232,7 +234,8 @@ class EndpointRequestThread(threading.Thread):
             response = requests.request(endpoint.verb, url, **payload)
         except requests.exceptions.RequestException as ex:
             result = False
-            message = f"{ex}"
+            message = f"{getattr(ex, 'message', repr(ex))}"
+
         end = datetime.datetime.now(datetime.timezone.utc)
         rd = self._build_dimensions(result, message, start, end, response)
         self.update(endpoint, rd)
@@ -255,6 +258,7 @@ class EndpointRequestThread(threading.Thread):
         to run until `should_die` is true.
 
         """
+        self.logger.debug("Starting a new RequestManager Thread")
         while True:
             if self.should_die:
                 break
@@ -263,12 +267,13 @@ class EndpointRequestThread(threading.Thread):
                 # Get the next endpoint; get blocks by default
                 # throw Empty exception after timeout to prevent deadlock
                 # TODO: make sure this is actually an `Endpoint`
-                endpoint = self.request_queue.get(timeout=10)
+                endpoint = self.request_queue.get(timeout=3)
                 self.logger.debug(f"{self.name} is checking {endpoint.name}")
                 self.request(endpoint)
                 self.wait_for_frequency(endpoint.frequency, endpoint.name)
                 self.request_queue.task_done()
                 self.request_queue.put(endpoint)
             except queue.Empty:
+                self.status = "Queue is empty"
                 continue  # give the thread a chance
             self.status = "Waiting for an endpoint request"

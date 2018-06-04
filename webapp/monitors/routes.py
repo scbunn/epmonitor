@@ -54,7 +54,7 @@ def details(slug):
     if monitor.slug in requestManager.window:
         results = requestManager.window[monitor.slug]
     else:
-        results = {}
+        results = []
 
     return render_template('monitors/details.html.j2',
                            title=title,
@@ -92,6 +92,7 @@ def edit(slug):
     monitor = Monitor.query.filter_by(slug=slug).first_or_404()
     form = EndpointForm()
     if form.validate_on_submit():  # changes were submitted
+        print(f"Got a Form!")
         process_form_data(form, monitor)
         flash(f"{monitor.name} updated")
         return redirect(url_for('monitors.details', slug=monitor.slug))

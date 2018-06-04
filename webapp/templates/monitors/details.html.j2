@@ -1,36 +1,120 @@
 {% extends "base.html.j2" %}
 {% set active_page = 'monitors' %}
+{% if results %}
+{# run stats once #}
+{% set stddev = results|stddev %}
+{% set p99 = results|percentile(99) %}
+{% set p95 = results|percentile(95) %}
+{% set p75 = results|percentile(75) %}
+{% endif %}
 
 {% block content %}
+<section class="section section-title center">
+    <nav>
+        <div class="nav-wrapper deep-orange lighten-4 grey-text text-darken-4">
+            <div class="col s12">
+                <a class="breadcrumb modal-trigger grey-text text-darken-4">{{ monitor.name }}</a>
+            </div>
+        </div>
+    </nav>
+</section>
+
+{% if results %}
+<section class="section section-single-stats center">
+    <div class="row">
+        <div class="col s12 l2">
+            <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
+                <i class="fas fa-percentage fa-lg"></i>
+                <h6>Availability</h6>
+                <h5 class="count">{{ '%0.2f' | format(results|availability) }}%</h5>
+            </div>
+        </div>
+        <div class="col s12 l2">
+            <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
+                <i class="fas fa-percentage fa-lg"></i>
+                <h6>Failure Rate</h6>
+                <h5 class="count">{{ '%0.2f' | format(results|failRate) }}%</h5>
+            </div>
+        </div>
+        <div class="col s12 l2">
+            <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
+                <i class="fas fa-clock fa-lg"></i>
+                <h6>Frequency</h6>
+                <h5 class="count">{{ monitor.frequency }}/s</h5>
+            </div>
+        </div>
+        <div class="col s12 l3">
+            <div class="card-panel deep-orange darken-4 white-text center">
+                <span class="grey-text text-lighten-3">P<sub>k</sub></span>
+                <h6>StdDev</h6>
+                <h5 class="count">{{ '%0.0f' | format(stddev) }} ms</h5>
+            </div>
+        </div>
+        <div class="col s12 l3">
+            <div class="card-panel deep-orange darken-4 white-text center">
+                <span class="grey-text text-lighten-3">P<sub>k</sub></span>
+                <h6>99th</h6>
+                <h5 class="count">{{ '%0.0f' | format(p99) }} ms</h5>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col s12 l2">
+            <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
+                <i class="fas fa-calendar fa-lg"></i>
+                <h6>Created</h6>
+                <h5>{{ moment(monitor.created).fromNow() }}</h5>
+            </div>
+        </div>
+        <div class="col s12 l2">
+            <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
+                <i class="fas fa-calendar-check fa-lg"></i>
+                <h6>Updated</h6>
+                <h5>{{ moment(monitor.updated).fromNow() }}</h5>
+            </div>
+        </div>
+        <div class="col s12 l2">
+            <div class="card-panel deep-orange lighten-2 grey-text text-darken-4 center">
+                <i class="fas fa-file fa-lg"></i>
+                <h6>Type</h6>
+                <h5 class="count">{{ endpoint.verb }}/s</h5>
+            </div>
+        </div>
+        <div class="col s12 l3">
+            <div class="card-panel deep-orange darken-4 white-text center">
+                <span class="grey-text text-lighten-3">P<sub>k</sub></span>
+                <h6>95th</h6>
+                <h5 class="count">{{ '%0.0f' | format(p95) }} ms</h5>
+            </div>
+        </div>
+        <div class="col s12 l3">
+            <div class="card-panel deep-orange darken-4 white-text center">
+                <span class="grey-text text-lighten-3">P<sub>k</sub></span>
+                <h6>75th</h6>
+                <h5 class="count">{{ '%0.0f' | format(p75) }} ms</h5>
+            </div>
+        </div>
+    </div>
+
+    </div>
+</section>
+{% endif %}
+
+<section class="section section-chart-data">
     <div class="row">
         <div class="col s12">
-            <h1>{{ monitor.name }}</h1>
             <div class="card">
                 <div class="card-image">
-                    <canvas id="monitorRealtime" width=1024" height=300"></canvas>
+                    <canvas id="realtime-chart" height="100"></canvas>
                 </div>
                 <div class="card-tabs">
                     <ul class="tabs tabs-fixed-width">
-                        <li class="tab"><a href="#realtime">Data</a></li>
-                        <li class="tab"><a href="#details">Details</a></li>
+                        <li class="tab"><a href="#realtime">Window Data</a></li>
                         {% if monitor.payload %}<li class="tab"><a href="#payload">Payload</a></li>{% endif %}
                         {% if monitor.headers %}<li class="tab"><a href="#headers">Headers</a></li>{% endif %}
                     </ul>
                 </div>
-                <div class="fixed-action-btn horizontal" style="position:relative; float:right; ">
-                    <a class="btn-floating btn-small deep-orange">
-                        <i class="large material-icons">settings</i>
-                    </a>
-                    <ul>
-                        <li class="waves-effect waves-light">
-                            <a href="#!"><i class="material-icons black-text">delete</i></a>
-                        </li>
-                        <li class="waves-effect waves-light">
-                            <a href="{{ url_for('monitors.edit', slug=monitor.slug)  }}"><i class="material-icons black-text">edit</i></a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="card-content deep-orange lighten-4">
+                <div class="card-content">
                     <div id="realtime">
                         {% if results %}
                         <p class="center text-blue-grey text-darken-4"><strong>{{ monitor.name }} statistics</strong></p>
@@ -41,45 +125,34 @@
                                 seconds.
                             </em>
                         </p>
-                        <table class="responsive-table">
-                            <thead>
-                                <tr>
-                                    <th>Availability</th>
-                                    <th>Failure rate</th>
-                                    <th>Standard Deviation</th>
-                                    <th>p99</th>
-                                    <th>p90</th>
-                                    <th>p75</th>
-                                    <th>p50</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>{{ '%0.2f' | format(results|availability) }}% </td>
-                                    <td>{{ '%0.2f' | format(results|failRate) }}%</td>
-                                    <td>{{ '%0.2f' | format(results|stddev) }} ms </td>
-                                    <td>{{ '%0.2f' | format(results|percentile(99)) }} ms</td>
-                                    <td>{{ '%0.2f' | format(results|percentile(90)) }} ms</td>
-                                    <td>{{ '%0.2f' | format(results|percentile(75)) }} ms</td>
-                                    <td>{{ '%0.2f' | format(results|percentile(50)) }} ms</td>
-                                </tr>
-                            </tbody>
-                        </table><br>
-                        <p class="center text-blue-grey text-darken-4"><strong>Request results</strong></p>
-                        <table class="responsive-table highlight">
+                        <table class="responsive-table striped">
                             <thead>
                                 <tr>
                                     <th>Timestamp</th>
                                     <th>Response</th>
+                                    <th>TTFB</th>
+                                    <th>Status Code</th>
+                                    <th>Content</th>
                                     <th>Status</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for window in results %}
                                 <tr>
                                     <td>{{ moment(window.date).format('YYYY-MM-DD HH:mm:ss ZZ') }}</td>
-                                    <td>{{ '%0.2f' | format(window.elapsed|float) }} ms</td>
+                                    <td>{{ '%0.0f' | format(window.elapsed) }} ms</td>
+                                    <td>{{ '%0.0f' | format(window.TTFB) }} ms</td>
                                     <td>{{ window.status_code }}</td>
+                                    <td>
+                                        <i class="{% if window.content %}fas fa-check-circle{% else %}fas fa-times-circle{% endif %}"></i>
+                                    </td>
+                                    <td>
+                                        <i class="{% if window.status %}fas fa-check-circle{% else %}fas fa-times-circle{% endif %}"></i>
+                                    </td>
+                                    <td>
+                                        {% if window.message %}{{ window.message }}{% endif %}
+                                    </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -88,37 +161,18 @@
                         <p class="flow-text">Waiting on data...</p>
                         {% endif %}
                     </div>
-                    <div id="details">
-                        <table class="responsive-table">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Created</th>
-                                    <th>Updated</th>
-                                    <th>Request Type</th>
-                                    <th>Frequency (seconds)</th>
-                                    <th>Endpoint</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>{{ monitor.name }}</td>
-                                    <td>{{ moment(monitor.created).fromNow() }}</td>
-                                    <td>{{ moment(monitor.updated).fromNow() }}</td>
-                                    <td>{{ endpoint.verb }}</td>
-                                    <td>{{ endpoint.frequency }}</td>
-                                    <td>{{ endpoint.url | truncate(25) }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
                     {% if endpoint.payload %}
-                    <div id="payload" class="blue-grey lighten-1">
-                        <pre><code>{{ endpoint.payload|e }}</code></pre>
+                    <div id="payload">
+                        <div class="row">
+                            <div class="col s12">
+                                <pre class="prettyprint linenum"><code>{{ endpoint.payload|e }}</code></pre>
+                            </div>
+                        </div>
                     </div>
                     {% endif %}
                     {% if endpoint.headers %}
                     <div id="headers">
+
                         <table class="responsive-table">
                             <thead>
                                 <tr>
@@ -143,51 +197,99 @@
             </div>
         </div>
     </div>
+</section>
+
 {% endblock %}
 
 {% block javascript %}
 {{ super() }}
 {{ moment.include_moment() }}
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.bundle.min.js"></script>
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?skin=sunburst"></script>
+
 <script type="text/javascript">
-    var ctx = $("#monitorRealtime");
-    var responseTimeChart = new Chart(ctx, {
-        type: 'bubble',
+    var ctx_chart = document.getElementById("realtime-chart").getContext('2d');
+
+    var realtimeChart = new Chart(ctx_chart, {
+        type: 'line',
         labelString: '{{ monitor.name }}',
         data: {
-            datasets: [{
-                label: 'Response Time (ms)',
-                data: [
-                    {% for window in results %}
-                    { y: {{ window.elapsed }}, x: new Date({{ window.timestamp }} * 1000), r: 10 },
-                    {% endfor %}
-                ]
-            }]
+            datasets: [
+                {
+                    label: 'Response Time',
+                    backgroundColor: 'rgba(254, 2, 41, 0.8)',
+                    borderColor: 'rgba(254, 2, 41, 1)',
+                    data: [
+                        {% for dp in results %}
+                        {y: {{ dp.elapsed }}, x: new Date({{ dp.timestamp }} * 1000) },
+                        {% endfor %}
+                    ]
+                },
+                {% if results %}{
+                    label: '99th',
+                    fill: false,
+                    borderDash: [5, 5],
+                    spanGaps: true,
+                    backgroundColor: 'rgba(255, 208, 0, 0.8)',
+                    borderColor: 'rgba(255, 208, 0, 1)',
+                    data: [
+                        { y: {{ p99 }}, x: new Date({{ results[0].timestamp }} * 1000) },
+                        { y: {{ p99 }}, x: new Date({{ results[-1].timestamp }} * 1000) }
+                    ]
+                },
+                {
+                    label: '95th',
+                    fill: false,
+                    borderDash: [5, 5],
+                    backgroundColor: 'rgba(240, 108, 0, 0.8)',
+                    borderColor: 'rgba(240, 108, 0, 1)',
+                    data: [
+                        { y: {{ p95 }}, x: new Date({{ results[0].timestamp }} * 1000) },
+                        { y: {{ p95 }}, x: new Date({{ results[-1].timestamp }} * 1000) }
+                    ]
+                },
+                {
+                    label: '75th',
+                    fill: false,
+                    borderDash: [5, 5],
+                    backgroundColor: 'rgba(198, 223, 95, 0.8)',
+                    borderColor: 'rgba(198, 223, 95, 1)',
+                    data: [
+                        { y: {{ p75 }}, x: new Date({{ results[0].timestamp }} * 1000) },
+                        { y: {{ p75 }}, x: new Date({{ results[-1].timestamp }} * 1000) }
+                    ]
+                }
+                {% endif %}
+            ]
         },
         options: {
+            responsive: true,
             title: {
                 display: true,
                 text: '{{ monitor.name }}'
             },
             scales: {
-                yAxes: [{
-                    scaleLabel: {
-                        display: true,
-                        labelString: 'milliseconds'
-                    }
-                }],
                 xAxes: [{
+                    display: true,
                     type: 'time',
                     time: {
                         unit: 'second'
                     },
                     scaleLabel: {
                         display: true,
-                        labelString: 'Timeline'
+                        labelString: 'time'
+                    }
+                }],
+                yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'milliseconds'
                     }
                 }]
             }
+
         }
     });
-</script>
+</script> 
 {% endblock %}

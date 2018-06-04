@@ -38,6 +38,7 @@ def load():
     #       will need to be called from the UI
 
     # Now we need to clear the queue
+    requestManager.stop(join=True)
     requestManager.clear()
 
     count = 0
@@ -56,6 +57,7 @@ def load():
             ep.header(**monitor.headers)
             requestManager.request_queue.put(ep)
     flash(f"Loaded {count} monitors")
+    requestManager.start()
     return redirect(url_for('monitors.index'))
 
 

@@ -24,7 +24,7 @@ class Config(object):
 
 class DebugConfig(Config):
     DEBUG = True
-    REQUEST_THREADS = 2
+    REQUEST_THREADS = 10
     LOG_LEVEL = "DEBUG"
 
 

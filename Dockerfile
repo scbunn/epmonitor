@@ -6,7 +6,8 @@ WORKDIR /home/epmonitor
 RUN python -m venv venv
 RUN venv/bin/pip install gunicorn
 
-COPY app.py app.py
+COPY app app
+COPY stats stats
 COPY checks checks
 COPY config.py config.py
 COPY migrations migrations
@@ -20,7 +21,7 @@ RUN chmod +x boot.sh
 RUN venv/bin/pip install --upgrade -e .
 RUN chown -R epmonitor:epmonitor .
 
-ENV FLASK_APP app.py
+ENV FLASK_APP app
 
 USER epmonitor
 

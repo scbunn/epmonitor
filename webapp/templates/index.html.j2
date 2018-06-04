@@ -286,7 +286,7 @@ function countStats() {
                     borderColor: 'rgba(254, 2, 41, 1)',
                     data: [
                         {% for dp, ts in network['bytes_recv_s'] %}
-                        { y: {{ dp }}, x: new Date({{ ts }} * 1000)},
+                        { y: {{ dp|megabytes }}, x: new Date({{ ts }} * 1000)},
                         {% endfor %}
                     ]
                 },
@@ -297,7 +297,7 @@ function countStats() {
                     borderColor: 'rgba(255, 208, 0, 1)',
                     data: [
                         {% for dp, ts in network['bytes_sent_s'] %}
-                        { y: {{ dp }}, x: new Date({{ ts }} * 1000)},
+                        { y: {{ dp|megabytes }}, x: new Date({{ ts }} * 1000)},
                         {% endfor %}
                     ]
                 }

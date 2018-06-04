@@ -59,7 +59,6 @@
         </div>
     </div>
 
-
     <!-- Drop down settings menus -->
     {% for monitor in monitors %}
     <ul id="settings-{{ monitor.slug }}" class="dropdown-content">
@@ -71,6 +70,7 @@
     <!-- end drop downs -->
 
 </section>
+
 {% endblock %}
 
 {% block javascript %}
@@ -87,4 +87,5 @@
         });
     });
 </script>
+
 {% endblock %}

@@ -51,6 +51,9 @@ def percentile(window, p):
     if not isinstance(window, list):
         raise ValueError("percentile window expects a list")
 
+    if not window:
+        return 0   # we got an empty list; not what we expected
+
     if isinstance(window[0], tuple):  # we have a list of Monitor Results
         arry = np.array(epresult_to_list(window))
     else:  # assume we have a list of numeric data
@@ -62,6 +65,9 @@ def stddev(window):
     """Return the standard deviation of `monitor_result`."""
     if not isinstance(window, list):
         raise ValueError('stddev window expected to be a list')
+
+    if not window:
+        return 0   # an empty list is not what we expected
     if isinstance(window[0], tuple):
         data = epresult_to_list(window)
     else:
